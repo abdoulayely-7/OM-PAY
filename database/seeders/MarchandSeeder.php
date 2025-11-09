@@ -12,6 +12,6 @@ class MarchandSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        \App\Models\Marchand::factory(5)->create();
     }
 }

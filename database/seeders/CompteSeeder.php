@@ -12,6 +12,12 @@ class CompteSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        $users = \App\Models\User::all();
+
+        foreach ($users as $user) {
+            \App\Models\Compte::factory()->create([
+                'user_id' => $user->id,
+            ]);
+        }
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,29 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Routes d'authentification (non protégées)
+Route::prefix('v1/auth')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
+});
+
+// Routes protégées
+Route::middleware(['auth:api', 'log'])->group(function () {
+    Route::get('/user', [AuthController::class, 'user']);
+
+    // Routes pour les administrateurs
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        // Routes admin à implémenter
+    });
+
+    // Routes pour les distributeurs
+    Route::middleware('role:distributeur')->prefix('distributeur')->group(function () {
+        // Routes distributeur à implémenter
+    });
+
+    // Routes pour les clients
+    Route::middleware('role:client')->prefix('client')->group(function () {
+        // Routes client à implémenter
+    });
 });
