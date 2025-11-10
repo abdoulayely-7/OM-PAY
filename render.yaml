@@ -2,8 +2,8 @@ services:
   - type: web
     name: om-pay-api
     runtime: docker
-    buildCommand: "./build.sh"
-    startCommand: "docker run -p 80:80 om-pay"
+    buildCommand: "docker build -t om-pay ."
+    startCommand: "./start.sh"
     envVars:
       - key: APP_ENV
         value: production
@@ -22,11 +22,11 @@ services:
       - key: DB_PASSWORD
         value: "r5SKL0PoFIoX0kPwmrdwQnIVAbOc1sXo"
       - key: CACHE_DRIVER
-        value: redis
+        value: file
       - key: QUEUE_CONNECTION
-        value: database
+        value: sync
       - key: SESSION_DRIVER
-        value: database
+        value: file
       - key: LOG_CHANNEL
         value: stderr
       - key: LOG_LEVEL
