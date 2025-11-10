@@ -30,30 +30,38 @@ fi
 
 # Attendre que la base de données soit prête
 echo "Waiting for database to be ready..."
-max_attempts=30
+max_attempts=60
 attempt=1
 while [ $attempt -le $max_attempts ]; do
-    if pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" 2>/dev/null; then
+    if php artisan migrate:status >/dev/null 2>&1; then
         echo "Database is ready!"
         break
     fi
     echo "Database is unavailable - attempt $attempt/$max_attempts - sleeping"
-    sleep 2
+    sleep 3
     attempt=$((attempt + 1))
 done
 
 if [ $attempt -gt $max_attempts ]; then
     echo "Database connection failed after $max_attempts attempts"
-    exit 1
+    echo "Starting application anyway (database might be ready later)..."
 fi
 
-# Exécuter les migrations
-echo "Running migrations..."
-php artisan migrate --force
+# Exécuter les migrations (si la DB est prête)
+if php artisan migrate:status >/dev/null 2>&1; then
+    echo "Running migrations..."
+    php artisan migrate --force
+else
+    echo "Database not ready, skipping migrations for now..."
+fi
 
 # Installer Passport si nécessaire
-echo "Installing Passport keys..."
-php artisan passport:install --force
+if php artisan migrate:status >/dev/null 2>&1; then
+    echo "Installing Passport keys..."
+    php artisan passport:install --force
+else
+    echo "Database not ready, skipping Passport installation for now..."
+fi
 
 # Générer les caches pour la production
 echo "Optimizing application..."
