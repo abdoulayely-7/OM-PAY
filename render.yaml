@@ -17,12 +17,19 @@ services:
           name: om-pay-api
           property: host
 
-      # Database (PostgreSQL)
+      # Database (utilise votre DB Render existante)
       - key: DB_CONNECTION
         value: pgsql
-      - fromDatabase:
-          name: om-pay-db
-          property: connectionString
+      - key: DB_HOST
+        value: dpg-d48f51ngi27c73cjrhmg-a.oregon-postgres.render.com
+      - key: DB_PORT
+        value: 5432
+      - key: DB_DATABASE
+        value: om_pay
+      - key: DB_USERNAME
+        value: om_pay_user
+      - key: DB_PASSWORD
+        value: r5SKL0PoFIoX0kPwmrdwQnIVAbOc1sXo
 
       # Cache & Queue
       - key: CACHE_DRIVER
@@ -35,9 +42,3 @@ services:
       # JWT Secret (auto-generated)
       - key: APP_KEY
         generateValue: true
-
-databases:
-  - name: om-pay-db
-    databaseName: om_pay
-    user: om_pay_user
-    plan: free
