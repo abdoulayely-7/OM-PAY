@@ -12,15 +12,15 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromSecret: db_host
+        value: "dpg-d48f51ngi27c73cjrhmg-a.oregon-postgres.render.com"
       - key: DB_PORT
-        fromSecret: db_port
+        value: "5432"
       - key: DB_DATABASE
-        fromSecret: db_name
+        value: "om_pay"
       - key: DB_USERNAME
-        fromSecret: db_username
+        value: "om_pay_user"
       - key: DB_PASSWORD
-        fromSecret: db_password
+        value: "r5SKL0PoFIoX0kPwmrdwQnIVAbOc1sXo"
       - key: CACHE_DRIVER
         value: redis
       - key: QUEUE_CONNECTION
@@ -31,15 +31,3 @@ services:
         value: stderr
       - key: LOG_LEVEL
         value: info
-
-secrets:
-  - key: db_host
-    value: "dpg-d48f51ngi27c73cjrhmg-a.oregon-postgres.render.com"
-  - key: db_port
-    value: "5432"
-  - key: db_name
-    value: "om_pay"
-  - key: db_username
-    value: "om_pay_user"
-  - key: db_password
-    value: "r5SKL0PoFIoX0kPwmrdwQnIVAbOc1sXo"
