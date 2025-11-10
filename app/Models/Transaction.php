@@ -19,4 +19,17 @@ class Transaction extends Model
         'merchant_id',
     ];
 
+    protected $casts = [
+        'montant' => 'decimal:2',
+    ];
+
+    public function compte()
+    {
+        return $this->belongsTo(Compte::class);
+    }
+
+    public function merchant()
+    {
+        return $this->belongsTo(User::class, 'merchant_id');
+    }
 }

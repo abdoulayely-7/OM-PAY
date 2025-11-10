@@ -14,9 +14,38 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Passport\Client;
 
+/**
+ * @OA\Tag(
+ *     name="Authentification",
+ *     description="Endpoints d'authentification"
+ * )
+ */
 class AuthController extends Controller
 {
     use ApiResponseTrait;
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/login",
+     *     tags={"Authentification"},
+     *     summary="Connexion utilisateur",
+     *     description="Authentifie un utilisateur et retourne un token d'accès",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/LoginRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Connexion réussie",
+     *         @OA\JsonContent(ref="#/components/schemas/AuthResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Identifiants invalides",
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     )
+     * )
+     */
     public function login(Request $request)
     {
         $request->validate([
@@ -68,6 +97,30 @@ class AuthController extends Controller
         ])->withCookie($cookie);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/refresh",
+     *     tags={"Authentification"},
+     *     summary="Rafraîchir le token d'accès",
+     *     description="Utilise un refresh token pour obtenir un nouveau token d'accès",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="refresh_token", type="string", description="Refresh token")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Token rafraîchi avec succès",
+     *         @OA\JsonContent(ref="#/components/schemas/AuthResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Refresh token invalide",
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     )
+     * )
+     */
     public function refresh(Request $request)
     {
         $request->validate([
@@ -94,6 +147,27 @@ class AuthController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/logout",
+     *     tags={"Authentification"},
+     *     summary="Déconnexion utilisateur",
+     *     description="Révoque tous les tokens d'accès de l'utilisateur",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Déconnexion réussie",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Successfully logged out")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Token invalide",
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     )
+     * )
+     */
     public function logout(Request $request)
     {
         // Révoquer tous les tokens de l'utilisateur
@@ -109,6 +183,37 @@ class AuthController extends Controller
         ])->withCookie($cookie);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/register",
+     *     tags={"Authentification"},
+     *     summary="Inscription utilisateur",
+     *     description="Crée un nouveau compte utilisateur avec un compte associé",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/RegisterRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Utilisateur créé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/User"),
+     *             @OA\Property(property="message", type="string", example="Utilisateur créé avec succès. Vous pouvez maintenant vous connecter.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreurs de validation",
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     )
+     * )
+     */
     public function register(Request $request)
     {
         // Valider manuellement pour avoir le contrôle sur les erreurs
@@ -206,6 +311,29 @@ class AuthController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/user",
+     *     tags={"Authentification"},
+     *     summary="Informations utilisateur",
+     *     description="Récupère les informations de l'utilisateur connecté",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Informations utilisateur récupérées",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/User"),
+     *             @OA\Property(property="message", type="string", example="Informations utilisateur récupérées avec succès.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Token invalide",
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *     )
+     * )
+     */
     public function user(Request $request)
     {
         return $this->successResponse(

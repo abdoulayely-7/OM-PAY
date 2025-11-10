@@ -11,7 +11,7 @@ class PaiementRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,23 @@ class PaiementRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'code_marchand' => 'required|string|exists:marchands,code',
+            'montant' => 'required|numeric|min:100|max:1000000',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'code_marchand.required' => 'Le code marchand est obligatoire.',
+            'code_marchand.exists' => 'Le code marchand n\'existe pas.',
+            'montant.required' => 'Le montant est obligatoire.',
+            'montant.numeric' => 'Le montant doit être un nombre.',
+            'montant.min' => 'Le montant minimum est de 100 FCFA.',
+            'montant.max' => 'Le montant maximum est de 1 000 000 FCFA.',
         ];
     }
 }

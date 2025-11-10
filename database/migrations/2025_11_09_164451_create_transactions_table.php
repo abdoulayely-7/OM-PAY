@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('compte_id');
-            $table->enum('type', ['depot', 'paiement', 'retrait', 'transfert'])->index();
+            $table->enum('type', ['depot', 'paiement', 'retrait', 'transfert', 'transfer_debit', 'transfer_credit'])->index();
             $table->decimal('montant', 15, 2);
             $table->string('reference')->nullable();
             $table->uuid('merchant_id')->nullable();

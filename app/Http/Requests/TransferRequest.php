@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class TransactionRequest extends FormRequest
+class TransferRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,7 @@ class TransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'telephone' => ['required', 'string', 'regex:/^(?:\+221)?\s?(77|70|76|75|78)\s?\d{3}\s?\d{2}\s?\d{2}$/'],
+            'telephone_destinataire' => ['required', 'string', 'regex:/^(?:\+221)?\s?(77|70|76|75|78)\s?\d{3}\s?\d{2}\s?\d{2}$/'],
             'montant' => 'required|numeric|min:100|max:1000000',
         ];
     }
@@ -33,8 +33,8 @@ class TransactionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'telephone.required' => 'Le numéro de téléphone est obligatoire.',
-            'telephone.regex' => 'Le numéro de téléphone doit être au format sénégalais (+221) 77/70/76/75/78 XXX XX XX.',
+            'telephone_destinataire.required' => 'Le numéro de téléphone du destinataire est obligatoire.',
+            'telephone_destinataire.regex' => 'Le numéro de téléphone du destinataire doit être au format sénégalais (+221) 77/70/76/75/78 XXX XX XX.',
             'montant.required' => 'Le montant est obligatoire.',
             'montant.numeric' => 'Le montant doit être un nombre.',
             'montant.min' => 'Le montant minimum est de 100 FCFA.',
@@ -47,9 +47,9 @@ class TransactionRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Nettoyer et normaliser le numéro de téléphone
-        if ($this->has('telephone')) {
-            $telephone = $this->telephone;
+        // Nettoyer et normaliser le numéro de téléphone du destinataire
+        if ($this->has('telephone_destinataire')) {
+            $telephone = $this->telephone_destinataire;
 
             // Supprimer tous les espaces
             $telephone = preg_replace('/\s+/', '', $telephone);
@@ -65,7 +65,7 @@ class TransactionRequest extends FormRequest
                 }
             }
 
-            $this->merge(['telephone' => $telephone]);
+            $this->merge(['telephone_destinataire' => $telephone]);
         }
     }
 }

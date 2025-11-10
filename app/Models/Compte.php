@@ -18,4 +18,15 @@ class Compte extends Model
 
     public function user() { return $this->belongsTo(User::class); }
     public function transactions() { return $this->hasMany(Transaction::class); }
+
+    /**
+     * Calculer le solde dynamique basé sur les transactions
+     */
+    public function getBalanceAttribute()
+    {
+        $deposits = $this->transactions()->whereIn('type', ['depot', 'transfer_credit'])->sum('montant');
+        $withdrawals = $this->transactions()->whereIn('type', ['retrait', 'transfer_debit', 'paiement'])->sum('montant');
+
+        return $deposits - $withdrawals;
+    }
 }

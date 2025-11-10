@@ -34,11 +34,17 @@ Route::middleware(['auth:api', 'log'])->group(function () {
 
     // Routes pour les distributeurs
     Route::middleware('role:distributeur')->prefix('distributeur')->group(function () {
-        // Routes distributeur à implémenter
+        Route::post('/depot', [App\Http\Controllers\TransactionController::class, 'depot']);
+        Route::post('/retrait', [App\Http\Controllers\TransactionController::class, 'retrait']);
+        Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
+        Route::get('/transactions/{transaction}', [App\Http\Controllers\TransactionController::class, 'show']);
     });
 
     // Routes pour les clients
     Route::middleware('role:client')->prefix('client')->group(function () {
-        // Routes client à implémenter
+        Route::get('/solde', [App\Http\Controllers\TransactionController::class, 'getSolde']);
+        Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'getTransactionsClient']);
+        Route::post('/transfert', [App\Http\Controllers\TransactionController::class, 'transfert']);
+        Route::post('/paiement', [App\Http\Controllers\PayementController::class, 'paiement']);
     });
 });
