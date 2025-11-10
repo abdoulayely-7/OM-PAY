@@ -49,14 +49,11 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'identifier' => 'required|string', // Peut être email ou téléphone
+            'telephone' => 'required|string', // Utilise seulement le téléphone
             'password' => 'required|string',
         ]);
 
-        // Déterminer si c'est un email ou un numéro de téléphone
-        $field = filter_var($request->identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'telephone';
-
-        $user = User::where($field, $request->identifier)->first();
+        $user = User::where('telephone', $request->telephone)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['error' => 'Invalid credentials'], 401);
