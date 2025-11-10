@@ -1,5 +1,5 @@
 # Utiliser l'image PHP officielle avec Apache
-FROM php:8.3-apache
+FROM php:8.2-apache
 
 # Installer les dépendances système
 RUN apt-get update && apt-get install -y \
@@ -31,33 +31,32 @@ COPY . /var/www/html
 # Installer les dépendances PHP
 RUN composer install --optimize-autoloader --no-dev
 
-# Copier le fichier .env.example et générer la clé
-COPY .env.example .env
-RUN php artisan key:generate
-
-# Configurer les permissions
+# Définir les permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Créer le script de démarrage
-RUN echo '#!/bin/bash\n\
-echo "Waiting for database..."\n\
-while ! pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USERNAME; do\n\
-    sleep 1\n\
-done\n\
-echo "Database is ready!"\n\
-\n\
-php artisan migrate --force\n\
-php artisan db:seed --force\n\
-php artisan passport:install --force\n\
-\n\
-apache2-foreground' > /usr/local/bin/start.sh
+# Copier la configuration Apache personnalisée
+COPY <<EOF /etc/apache2/sites-available/000-default.conf
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html/public
 
-RUN chmod +x /usr/local/bin/start.sh
+    <Directory /var/www/html/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+EOF
 
 # Exposer le port 80
 EXPOSE 80
 
-# Commande de démarrage
+# Script de démarrage
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
 CMD ["/usr/local/bin/start.sh"]
