@@ -1,22 +1,14 @@
 services:
   - type: web
     name: om-pay-api
-    runtime: docker
+    env: docker
     buildCommand: "docker build -t om-pay ."
     startCommand: "docker run -p $PORT:80 om-pay"
     envVars:
-      - key: APP_NAME
-        value: OM-Pay
       - key: APP_ENV
         value: production
-      - key: APP_DEBUG
-        value: false
-      - key: APP_URL
-        generateValue: true
       - key: APP_KEY
         generateValue: true
-
-      # Database Configuration
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
@@ -39,19 +31,19 @@ services:
         fromDatabase:
           name: om-pay-db
           property: password
-
-      # Passport Configuration
-      - key: PASSPORT_PERSONAL_ACCESS_CLIENT_ID
-        value: "1"
-      - key: PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET
-        generateValue: true
-
-  - type: pgsql
-    name: om-pay-db
-    ipAllowList: []  # Only accessible by the web service
+      - key: CACHE_DRIVER
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
 
 databases:
   - name: om-pay-db
     databaseName: om_pay
     user: om_pay_user
-    plan: starter
+    plan: free

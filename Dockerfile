@@ -25,32 +25,36 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 # Définir le répertoire de travail
 WORKDIR /var/www/html
 
-# Copier les fichiers de l'application
-COPY . /var/www/html
+# Copier les fichiers de configuration
+COPY composer.json composer.lock ./
 
 # Installer les dépendances PHP
-RUN composer install --optimize-autoloader --no-dev
+RUN composer install --optimize-autoloader --no-dev --no-interaction
+
+# Copier le reste du code
+COPY . .
 
 # Définir les permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Copier la configuration Apache personnalisée
-COPY <<EOF /etc/apache2/sites-available/000-default.conf
-<VirtualHost *:80>
-    ServerAdmin webmaster@localhost
-    DocumentRoot /var/www/html/public
+# Créer le fichier .env
+RUN cp .env.example .env
 
-    <Directory /var/www/html/public>
-        AllowOverride All
-        Require all granted
-    </Directory>
+# Générer la clé d'application
+RUN php artisan key:generate
 
-    ErrorLog \${APACHE_LOG_DIR}/error.log
-    CustomLog \${APACHE_LOG_DIR}/access.log combined
-</VirtualHost>
-EOF
+# Configurer Apache pour Laravel
+RUN echo '<VirtualHost *:80>\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Exposer le port 80
 EXPOSE 80

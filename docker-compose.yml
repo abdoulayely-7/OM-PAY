@@ -8,21 +8,14 @@ services:
     ports:
       - "8000:80"
     environment:
-      - APP_NAME=OM-Pay
       - APP_ENV=local
       - APP_KEY=${APP_KEY}
-      - APP_DEBUG=true
-      - APP_URL=http://localhost:8000
-
       - DB_CONNECTION=pgsql
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_DATABASE=om_pay
-      - DB_USERNAME=om_pay_user
-      - DB_PASSWORD=om_pay_password
-
-      - PASSPORT_PERSONAL_ACCESS_CLIENT_ID=1
-      - PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=${PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET}
+      - DB_DATABASE=${DB_DATABASE:-om_pay}
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
     depends_on:
       - db
     volumes:
@@ -36,9 +29,9 @@ services:
       context: .
       dockerfile: Dockerfile.db
     environment:
-      - POSTGRES_DB=om_pay
-      - POSTGRES_USER=om_pay_user
-      - POSTGRES_PASSWORD=om_pay_password
+      - POSTGRES_DB=${DB_DATABASE:-om_pay}
+      - POSTGRES_USER=${DB_USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
     ports:
       - "5432:5432"
     volumes:
