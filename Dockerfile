@@ -31,7 +31,8 @@ COPY . /var/www/html
 # Installer les dépendances PHP
 RUN composer install --optimize-autoloader --no-dev
 
-# Générer la clé d'application
+# Copier le fichier .env.example et générer la clé
+COPY .env.example .env
 RUN php artisan key:generate
 
 # Configurer les permissions
