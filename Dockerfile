@@ -25,14 +25,14 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 # Définir le répertoire de travail
 WORKDIR /var/www/html
 
+# Copier le reste du code
+COPY . .
+
 # Copier les fichiers de configuration
 COPY composer.json composer.lock ./
 
 # Installer les dépendances PHP
 RUN composer install --optimize-autoloader --no-dev --no-interaction
-
-# Copier le reste du code
-COPY . .
 
 # Définir les permissions
 RUN chown -R www-data:www-data /var/www/html \
