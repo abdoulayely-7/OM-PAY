@@ -799,13 +799,14 @@
                         "format": "uuid",
                         "description": "ID unique de l'utilisateur"
                     },
-                    "nom": {
+                    "name": {
                         "type": "string",
-                        "description": "Nom de l'utilisateur"
+                        "description": "Nom complet de l'utilisateur"
                     },
-                    "prenom": {
+                    "email": {
                         "type": "string",
-                        "description": "Prénom de l'utilisateur"
+                        "format": "email",
+                        "description": "Adresse email"
                     },
                     "telephone": {
                         "type": "string",
@@ -819,6 +820,12 @@
                             "admin"
                         ],
                         "description": "Rôle de l'utilisateur"
+                    },
+                    "email_verified_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Date de vérification email"
                     },
                     "created_at": {
                         "type": "string",
@@ -854,20 +861,21 @@
                 "type": "object",
                 "title": "Requête d'inscription",
                 "required": [
-                    "nom",
-                    "prenom",
+                    "name",
+                    "email",
                     "telephone",
                     "password",
                     "role"
                 ],
                 "properties": {
-                    "nom": {
+                    "name": {
                         "type": "string",
-                        "description": "Nom"
+                        "description": "Nom complet"
                     },
-                    "prenom": {
+                    "email": {
                         "type": "string",
-                        "description": "Prénom"
+                        "format": "email",
+                        "description": "Adresse email"
                     },
                     "telephone": {
                         "type": "string",
@@ -938,12 +946,12 @@
                     "user_id": {
                         "type": "string",
                         "format": "uuid",
-                        "description": "ID de l'utilisateur"
+                        "description": "ID de l'utilisateur propriétaire"
                     },
                     "balance": {
                         "type": "number",
                         "format": "decimal",
-                        "description": "Solde du compte"
+                        "description": "Solde calculé dynamiquement"
                     },
                     "created_at": {
                         "type": "string",
@@ -993,6 +1001,7 @@
                     },
                     "reference": {
                         "type": "string",
+                        "nullable": true,
                         "description": "Référence unique de la transaction"
                     },
                     "merchant_id": {
@@ -1038,6 +1047,7 @@
                     },
                     "description": {
                         "type": "string",
+                        "nullable": true,
                         "description": "Description du marchand"
                     },
                     "created_at": {
