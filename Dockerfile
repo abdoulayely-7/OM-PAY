@@ -39,11 +39,24 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Créer le fichier .env
-RUN cp .env.example .env
-
-# Générer la clé d'application
-RUN php artisan key:generate
+# Créer le fichier .env avec les bonnes valeurs
+RUN echo "APP_NAME=\"OM-Pay\"" > .env && \
+    echo "APP_ENV=production" >> .env && \
+    echo "APP_KEY=" >> .env && \
+    echo "APP_DEBUG=false" >> .env && \
+    echo "DB_CONNECTION=pgsql" >> .env && \
+    echo "DB_HOST=dpg-d48f51ngi27c73cjrhmg-a.oregon-postgres.render.com" >> .env && \
+    echo "DB_PORT=5432" >> .env && \
+    echo "DB_DATABASE=om_pay" >> .env && \
+    echo "DB_USERNAME=om_pay_user" >> .env && \
+    echo "DB_PASSWORD=r5SKL0PoFIoX0kPwmrdwQnIVAbOc1sXo" >> .env && \
+    echo "CACHE_DRIVER=redis" >> .env && \
+    echo "SESSION_DRIVER=redis" >> .env && \
+    echo "QUEUE_CONNECTION=sync" >> .env && \
+    echo "REDIS_HOST=127.0.0.1" >> .env && \
+    echo "REDIS_PASSWORD=null" >> .env && \
+    echo "REDIS_PORT=6379" >> .env && \
+    php artisan key:generate
 
 # Configurer Apache pour Laravel
 RUN echo '<VirtualHost *:80>\n\
@@ -59,8 +72,5 @@ RUN echo '<VirtualHost *:80>\n\
 # Exposer le port 80
 EXPOSE 80
 
-# Script de démarrage
-COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
-
-CMD ["/usr/local/bin/start.sh"]
+# Démarrer Apache au premier plan
+CMD apache2-foreground

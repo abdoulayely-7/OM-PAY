@@ -1,9 +1,9 @@
 services:
   - type: web
     name: om-pay-api
-    env: docker
-    buildCommand: "docker build -t om-pay ."
-    startCommand: "docker run -p $PORT:80 om-pay"
+    runtime: docker
+    buildCommand: "./build.sh"
+    startCommand: "docker run -p 80:80 om-pay"
     envVars:
       - key: APP_ENV
         value: production
