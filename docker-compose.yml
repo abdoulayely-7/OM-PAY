@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    environment:
+      - APP_NAME=OM-Pay
+      - APP_ENV=local
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=om_pay
+      - DB_USERNAME=om_pay_user
+      - DB_PASSWORD=om_pay_password
+
+      - CACHE_DRIVER=file
+      - QUEUE_CONNECTION=sync
+      - SESSION_DRIVER=file
+
+    depends_on:
+      - db
+    volumes:
+      - ./storage:/var/www/html/storage
+    networks:
+      - om-pay-network
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=om_pay
+      - POSTGRES_USER=om_pay_user
+      - POSTGRES_PASSWORD=om_pay_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - om-pay-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - om-pay-network
+
+volumes:
+  postgres_data:
+
+networks:
+  om-pay-network:
+    driver: bridge

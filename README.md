@@ -7,60 +7,196 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+## OM-Pay API
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+API Laravel pour le système de paiement OM-Pay avec authentification OAuth2 via Passport.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 🚀 Déploiement sur Render
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+#### Prérequis
+- Compte Render (https://render.com)
+- GitHub repository
 
-## Learning Laravel
+#### Déploiement automatique
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. **Connecter votre repository GitHub à Render**
+2. **Créer un nouveau service Web**
+3. **Configuration du déploiement :**
+   - **Runtime** : Docker
+   - **Build Command** : `docker build -t om-pay .`
+   - **Start Command** : `docker run -p $PORT:80 om-pay`
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+#### Variables d'environnement (dans Render Dashboard)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```
+APP_NAME=OM-Pay
+APP_ENV=production
+APP_DEBUG=false
+DB_CONNECTION=pgsql
+CACHE_DRIVER=file
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+```
 
-## Laravel Sponsors
+La base de données PostgreSQL sera automatiquement créée par Render.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 🛠️ Développement local
 
-### Premium Partners
+#### Avec Docker Compose
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+```bash
+# Cloner le repository
+git clone <your-repo-url>
+cd om-pay
 
-## Contributing
+# Copier le fichier d'environnement
+cp .env.example .env
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Générer la clé d'application
+php artisan key:generate
 
-## Code of Conduct
+# Démarrer les services
+docker-compose up -d
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Accéder à l'API
+# http://localhost:8000
+```
 
-## Security Vulnerabilities
+#### Installation manuelle
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# Installer les dépendances
+composer install
 
-## License
+# Configuration de la base de données
+php artisan migrate
+php artisan db:seed
+php artisan passport:install
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Démarrer le serveur
+php artisan serve
+```
+
+### 📚 API Documentation
+
+#### Authentification
+
+##### Inscription d'un client
+```http
+POST /api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "telephone": "+221771234569",
+  "password": "password123",
+  "password_confirmation": "password123"
+}
+```
+
+##### Connexion
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "john@example.com", // ou "+221771234569"
+  "password": "password123"
+}
+```
+
+##### Rafraîchir le token
+```http
+POST /api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "your_refresh_token"
+}
+```
+
+##### Déconnexion
+```http
+POST /api/v1/auth/logout
+Authorization: Bearer your_access_token
+```
+
+### 🔐 Authentification
+
+- **OAuth2** avec Laravel Passport
+- **Connexion flexible** : Email ou numéro de téléphone
+- **Tokens JWT** : Access + Refresh tokens
+- **Cookies sécurisés** (httpOnly, secure, sameSite)
+- **Validation stricte** des numéros sénégalais
+
+### 📱 Numéros de téléphone supportés
+
+Format sénégalais obligatoire :
+- `+221` (facultatif) + préfixe (77/70/76/75/78) + 7 chiffres
+- Exemples : `+221771234569`, `771234569`
+
+### 🏗️ Architecture
+
+- **Laravel 11** avec PHP 8.2
+- **PostgreSQL** pour la base de données
+- **Docker** pour la conteneurisation
+- **Middleware** personnalisés pour l'authentification et les rôles
+- **API Resources** pour le formatage des réponses
+- **Validation** stricte des données
+
+### 🧪 Tests
+
+```bash
+# Exécuter tous les tests
+php artisan test
+
+# Tests spécifiques
+php artisan test --filter AuthTest
+```
+
+### 📦 Structure du projet
+
+```
+om-pay/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/AuthController.php
+│   │   ├── Middleware/
+│   │   │   ├── AuthMiddleware.php
+│   │   │   ├── RoleMiddleware.php
+│   │   │   └── LoggingMiddleware.php
+│   │   ├── Requests/RegisterRequest.php
+│   │   └── Resources/UserResource.php
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── Compte.php
+│   │   ├── Transaction.php
+│   │   └── Marchand.php
+│   └── Traits/ApiResponseTrait.php
+├── database/
+│   ├── migrations/
+│   └── seeders/
+├── docker/
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── render.yaml
+├── routes/api.php
+└── README.md
+```
+
+### 🤝 Contribution
+
+1. Fork le projet
+2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
+3. Commit les changements (`git commit -m 'Add some AmazingFeature'`)
+4. Push vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrir une Pull Request
+
+### 📄 License
+
+Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+---
+
+**Développé avec ❤️ pour le système OM-Pay**

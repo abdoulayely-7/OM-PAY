@@ -1,0 +1,12 @@
+FROM postgres:15-alpine
+
+# Copier les scripts d'initialisation
+COPY init.sql /docker-entrypoint-initdb.d/
+
+# Variables d'environnement
+ENV POSTGRES_DB=om_pay
+ENV POSTGRES_USER=om_pay_user
+ENV POSTGRES_PASSWORD=om_pay_password
+
+# Exposer le port PostgreSQL
+EXPOSE 5432
