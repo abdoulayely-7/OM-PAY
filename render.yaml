@@ -12,25 +12,15 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: om-pay-db
-          property: host
+        value: "your_db_host"
       - key: DB_PORT
-        fromDatabase:
-          name: om-pay-db
-          property: port
+        value: "5432"
       - key: DB_DATABASE
-        fromDatabase:
-          name: om-pay-db
-          property: database
+        value: "your_db_name"
       - key: DB_USERNAME
-        fromDatabase:
-          name: om-pay-db
-          property: user
+        value: "your_db_username"
       - key: DB_PASSWORD
-        fromDatabase:
-          name: om-pay-db
-          property: password
+        value: "your_db_password"
       - key: CACHE_DRIVER
         value: redis
       - key: QUEUE_CONNECTION
@@ -41,9 +31,3 @@ services:
         value: stderr
       - key: LOG_LEVEL
         value: info
-
-databases:
-  - name: om-pay-db
-    databaseName: om_pay
-    user: om_pay_user
-    plan: free
