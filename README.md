@@ -29,7 +29,7 @@ OM-Pay est une API REST Laravel pour les services de paiement mobile au Sénéga
 - Docker & Docker Compose
 - Git
 
-### Installation rapide
+### Installation rapide oo
 
 ```bash
 # Cloner le projet
