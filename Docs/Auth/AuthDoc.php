@@ -57,12 +57,12 @@ namespace App\Docs\Auth;
  *     schema="RegisterRequest",
  *     type="object",
  *     title="Requête d'inscription",
- *     required={"nom", "prenom", "telephone", "password", "role"},
- *     @OA\Property(property="nom", type="string", description="Nom"),
- *     @OA\Property(property="prenom", type="string", description="Prénom"),
+ *     required={"name", "email", "telephone", "password", "password_confirmation"},
+ *     @OA\Property(property="name", type="string", description="Nom complet"),
+ *     @OA\Property(property="email", type="string", format="email", description="Adresse email"),
  *     @OA\Property(property="telephone", type="string", description="Numéro de téléphone"),
- *     @OA\Property(property="password", type="string", description="Mot de passe"),
- *     @OA\Property(property="role", type="string", enum={"client", "distributeur"}, description="Rôle")
+ *     @OA\Property(property="password", type="string", format="password", description="Mot de passe"),
+ *     @OA\Property(property="password_confirmation", type="string", format="password", description="Confirmation du mot de passe")
  * )
  *
  * @OA\Schema(
