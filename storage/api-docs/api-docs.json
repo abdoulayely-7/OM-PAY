@@ -1,5 +1,23 @@
 {
     "openapi": "3.0.0",
+    "info": {
+        "title": "OM Pay API",
+        "description": "API de paiement mobile pour OM Pay - Système de paiement et transfert d'argent",
+        "contact": {
+            "email": "contact@ompay.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "https:\/\/om-pay-qdx2.onrender.com",
+            "description": "Serveur de production"
+        },
+        {
+            "url": "http:\/\/localhost:8000",
+            "description": "Serveur de développement"
+        }
+    ],
     "paths": {
         "\/api\/v1\/auth\/login": {
             "post": {
@@ -247,6 +265,39 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "\/": {
+            "get": {
+                "summary": "Page d'accueil",
+                "description": "Page d'accueil de l'API OM Pay",
+                "operationId": "ac5f32eec336b092a10a014ae5e0d4ed",
+                "responses": {
+                    "200": {
+                        "description": "Page d'accueil affichée",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bienvenue sur l'API OM Pay"
+                                        },
+                                        "version": {
+                                            "type": "string",
+                                            "example": "1.0.0"
+                                        },
+                                        "documentation": {
+                                            "type": "string",
+                                            "example": "https:\/\/om-pay-qdx2.onrender.com\/api\/documentation"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "\/api\/client\/paiement": {
@@ -730,6 +781,359 @@
             }
         }
     },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        },
+        "schemas": {
+            "User": {
+                "type": "object",
+                "title": "Utilisateur",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID unique de l'utilisateur"
+                    },
+                    "nom": {
+                        "type": "string",
+                        "description": "Nom de l'utilisateur"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "description": "Prénom de l'utilisateur"
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "description": "Numéro de téléphone"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "client",
+                            "distributeur",
+                            "admin"
+                        ],
+                        "description": "Rôle de l'utilisateur"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date de création"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date de mise à jour"
+                    }
+                }
+            },
+            "LoginRequest": {
+                "type": "object",
+                "title": "Requête de connexion",
+                "required": [
+                    "telephone",
+                    "password"
+                ],
+                "properties": {
+                    "telephone": {
+                        "type": "string",
+                        "description": "Numéro de téléphone"
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "Mot de passe"
+                    }
+                }
+            },
+            "RegisterRequest": {
+                "type": "object",
+                "title": "Requête d'inscription",
+                "required": [
+                    "nom",
+                    "prenom",
+                    "telephone",
+                    "password",
+                    "role"
+                ],
+                "properties": {
+                    "nom": {
+                        "type": "string",
+                        "description": "Nom"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "description": "Prénom"
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "description": "Numéro de téléphone"
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "Mot de passe"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "client",
+                            "distributeur"
+                        ],
+                        "description": "Rôle"
+                    }
+                }
+            },
+            "AuthResponse": {
+                "type": "object",
+                "title": "Réponse d'authentification",
+                "properties": {
+                    "user": {
+                        "$ref": "#\/components\/schemas\/User"
+                    },
+                    "access_token": {
+                        "type": "string",
+                        "description": "Token d'accès"
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "example": "Bearer"
+                    },
+                    "expires_in": {
+                        "type": "integer",
+                        "description": "Durée de validité en secondes"
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "title": "Réponse d'erreur",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "Message d'erreur"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "description": "Détails des erreurs"
+                    }
+                }
+            },
+            "Compte": {
+                "type": "object",
+                "title": "Compte",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID unique du compte"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID de l'utilisateur"
+                    },
+                    "balance": {
+                        "type": "number",
+                        "format": "decimal",
+                        "description": "Solde du compte"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date de création"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date de mise à jour"
+                    },
+                    "user": {
+                        "$ref": "#\/components\/schemas\/User"
+                    }
+                }
+            },
+            "Transaction": {
+                "type": "object",
+                "title": "Transaction",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID unique de la transaction"
+                    },
+                    "compte_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID du compte"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "depot",
+                            "retrait",
+                            "transfert",
+                            "paiement",
+                            "transfer_debit",
+                            "transfer_credit"
+                        ],
+                        "description": "Type de transaction"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "decimal",
+                        "description": "Montant de la transaction"
+                    },
+                    "reference": {
+                        "type": "string",
+                        "description": "Référence unique de la transaction"
+                    },
+                    "merchant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "ID du marchand (pour les paiements)"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date de création"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date de mise à jour"
+                    },
+                    "compte": {
+                        "$ref": "#\/components\/schemas\/Compte"
+                    },
+                    "merchant": {
+                        "$ref": "#\/components\/schemas\/Marchand"
+                    }
+                }
+            },
+            "Marchand": {
+                "type": "object",
+                "title": "Marchand",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "ID unique du marchand"
+                    },
+                    "nom": {
+                        "type": "string",
+                        "description": "Nom du marchand"
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "Code unique du marchand"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description du marchand"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date de création"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date de mise à jour"
+                    }
+                }
+            },
+            "TransactionRequest": {
+                "type": "object",
+                "title": "Requête de transaction",
+                "required": [
+                    "telephone",
+                    "montant"
+                ],
+                "properties": {
+                    "telephone": {
+                        "type": "string",
+                        "description": "Numéro de téléphone du client"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "decimal",
+                        "description": "Montant de la transaction"
+                    }
+                }
+            },
+            "TransferRequest": {
+                "type": "object",
+                "title": "Requête de transfert",
+                "required": [
+                    "telephone_destinataire",
+                    "montant"
+                ],
+                "properties": {
+                    "telephone_destinataire": {
+                        "type": "string",
+                        "description": "Numéro de téléphone du destinataire"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "decimal",
+                        "description": "Montant du transfert"
+                    }
+                }
+            },
+            "TransferResponse": {
+                "type": "object",
+                "title": "Réponse de transfert",
+                "properties": {
+                    "transaction_debit": {
+                        "$ref": "#\/components\/schemas\/Transaction"
+                    },
+                    "transaction_credit": {
+                        "$ref": "#\/components\/schemas\/Transaction"
+                    }
+                }
+            },
+            "PaiementRequest": {
+                "type": "object",
+                "title": "Requête de paiement",
+                "required": [
+                    "code_marchand",
+                    "montant"
+                ],
+                "properties": {
+                    "code_marchand": {
+                        "type": "string",
+                        "description": "Code unique du marchand"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "decimal",
+                        "description": "Montant du paiement"
+                    }
+                }
+            },
+            "SoldeResponse": {
+                "type": "object",
+                "title": "Réponse de solde",
+                "properties": {
+                    "solde": {
+                        "type": "number",
+                        "format": "decimal",
+                        "description": "Solde actuel du compte"
+                    }
+                }
+            }
+        }
+    },
     "tags": [
         {
             "name": "Authentification",
@@ -743,32 +1147,5 @@
             "name": "Transactions",
             "description": "Endpoints de gestion des transactions"
         }
-    ],
-    "info": {
-        "title": "OM Pay API",
-        "version": "1.0.0",
-        "description": "API de paiement mobile pour OM Pay - Système de paiement et transfert d'argent",
-        "contact": {
-            "email": "contact@ompay.com"
-        }
-    },
-    "servers": [
-        {
-            "url": "https:\/\/om-pay-qdx2.onrender.com",
-            "description": "Serveur de production"
-        },
-        {
-            "url": "http:\/\/localhost:8000",
-            "description": "Serveur de développement"
-        }
-    ],
-    "components": {
-        "securitySchemes": {
-            "bearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT"
-            }
-        }
-    }
+    ]
 }
