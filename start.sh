@@ -2,7 +2,7 @@
 
 # Attendre que la base de données soit prête
 echo "Waiting for database..."
-while ! pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USERNAME; do
+while ! pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USERNAME -d $DB_DATABASE; do
     sleep 1
 done
 echo "Database is ready!"
