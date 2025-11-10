@@ -193,8 +193,8 @@ class TransactionController extends Controller
             $transaction = $this->transactionService->getTransaction($transactionId, auth()->id());
 
             return $this->successResponse(
-                'Transaction récupérée avec succès.',
-                new TransactionResource($transaction)
+                new TransactionResource($transaction),
+                'Transaction récupérée avec succès.'
             );
 
         } catch (\Exception $e) {
@@ -350,8 +350,8 @@ class TransactionController extends Controller
                 ->paginate($perPage);
 
             return $this->successResponse(
-                'Transactions récupérées avec succès.',
-                TransactionResource::collection($transactions)
+                TransactionResource::collection($transactions),
+                'Transactions récupérées avec succès.'
             );
 
         } catch (\Exception $e) {
