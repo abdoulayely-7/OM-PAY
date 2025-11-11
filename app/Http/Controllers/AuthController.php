@@ -24,6 +24,7 @@ class AuthController extends Controller
 {
     use ApiResponseTrait;
 
+
     /**
      * @OA\Post(
      *     path="/api/v1/auth/login",
