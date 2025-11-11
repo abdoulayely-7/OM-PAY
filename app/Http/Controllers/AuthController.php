@@ -265,12 +265,12 @@ class AuthController extends Controller
             'expires_in' => $token->token->expires_at->diffInSeconds(now()),
             'access_token' => $token->accessToken,
             'refresh_token' => $refreshToken->accessToken,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
+            // 'user' => [
+            //     'id' => $user->id,
+            //     'name' => $user->name,
+            //     'email' => $user->email,
+            //     'role' => $user->role,
+            // ],
         ])->withCookie($cookie);
     }
 
@@ -319,7 +319,7 @@ class AuthController extends Controller
                 'form_params' => [
                     'grant_type' => 'refresh_token',
                     'refresh_token' => $request->refresh_token,
-                    'client_id' => 1, // Personal access client
+                    'client_id' => 9, // Personal access client
                     'client_secret' => '', // Pas de secret pour personal access
                     'scope' => '',
                 ],
