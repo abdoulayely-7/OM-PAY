@@ -2,62 +2,241 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Compte;
 use App\Models\User;
+use App\Services\EmailService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Laravel\Passport\Client;
 
 /**
- * @OA\Tag(
- *     name="Authentification",
- *     description="Endpoints d'authentification"
+ * @OA\Info(
+ *     title="OM Pay API",
+ *     version="1.0.0",
+ *     description="API pour l'application OM Pay"
+ * )
+ *
+ * * @OA\Server(
+ *     url="https://om-pay-qdx2.onrender.com",
+ *     description="Serveur de production"
+ * )
+ *
+ * @OA\Server(
+ *     url="http://127.0.0.1:8000",
+ *     description="Serveur de développement"
+ * )
+ *
+
+ *
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer"
+ * )
+ *
+ * @OA\Schema(
+ *     schema="UserResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="string", example="uuid"),
+ *     @OA\Property(property="name", type="string", example="John Doe"),
+ *     @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+ *     @OA\Property(property="telephone", type="string", example="+221771234567"),
+ *     @OA\Property(property="role", type="string", enum={"client", "distributeur", "admin"}, example="client"),
+ *     @OA\Property(property="email_verified_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(property="compte", ref="#/components/schemas/CompteResource")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="CompteResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="string", example="uuid"),
+ *     @OA\Property(property="solde", type="number", format="float", example=0),
+ *     @OA\Property(property="created_at", type="string", format="date-time")
  * )
  */
+
 class AuthController extends Controller
 {
     use ApiResponseTrait;
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/register",
+     *     summary="Inscrire un nouvel utilisateur",
+     *     tags={"Authentification"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","email","telephone","password","password_confirmation"},
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="telephone", type="string", example="771234567"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Utilisateur créé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Utilisateur créé avec succès. Un code de vérification a été envoyé à votre email."),
+     *             @OA\Property(property="data", ref="#/components/schemas/UserResource")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function register(RegisterRequest $request)
+    {
+        Log::info('Register method called');
+        $validated = $request->validated();
+
+
+        try {
+            DB::beginTransaction();
+
+            // Générer le code de vérification
+            $code = random_int(100000, 999999);
+
+            // Créer l'utilisateur
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'telephone' => $validated['telephone'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'client', // Par défaut, tous les nouveaux utilisateurs sont clients
+                'verification_code' => $code,
+            ]);
+
+            // Créer un compte pour l'utilisateur
+            $compte = Compte::create([
+                'user_id' => $user->id,
+            ]);
+
+            DB::commit();
+
+            // Envoyer l'email de vérification
+            $emailService = app(EmailService::class);
+            $emailService->sendVerificationEmail($user->email, $code);
+
+            // Charger les relations pour la réponse
+            $user->load('compte');
+
+            return $this->successResponse(
+                new UserResource($user),
+                'Utilisateur créé avec succès. Un code de vérification a été envoyé à votre email.',
+                201
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return $this->errorResponse(
+                'Erreur lors de la création du compte utilisateur.',
+                500
+            );
+        }
+    }
 
     /**
      * @OA\Post(
      *     path="/api/v1/auth/login",
+     *     summary="Se connecter",
      *     tags={"Authentification"},
-     *     summary="Connexion utilisateur",
-     *     description="Authentifie un utilisateur et retourne un token d'accès",
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/LoginRequest")
+     *         @OA\JsonContent(
+     *             required={"identifier","password"},
+     *             @OA\Property(property="identifier", type="string", example="john@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="code", type="string", example="123456", description="Requis pour la première connexion")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Connexion réussie",
-     *         @OA\JsonContent(ref="#/components/schemas/AuthResponse")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="token_type", type="string", example="Bearer"),
+     *             @OA\Property(property="expires_in", type="integer", example=31536000),
+     *             @OA\Property(property="access_token", type="string"),
+     *             @OA\Property(property="refresh_token", type="string"),
+     *             @OA\Property(property="user", type="object",
+     *                 @OA\Property(property="id", type="string"),
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="email", type="string"),
+     *                 @OA\Property(property="role", type="string")
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=401,
      *         description="Identifiants invalides",
-     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Invalid credentials")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Code de vérification requis ou invalide",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Code de vérification requis ou invalide")
+     *         )
      *     )
      * )
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'telephone' => 'required|string', // Utilise seulement le téléphone
-            'password' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
-        $user = User::where('telephone', $request->telephone)->first();
+        $identifier = $validated['identifier'];
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+            $user = User::where('email', $identifier)->first();
+        } else {
+            // Normaliser le numéro de téléphone
+            $telephone = $identifier;
+            $telephone = preg_replace('/\s+/', '', $telephone);
+            if (!str_starts_with($telephone, '+221')) {
+                if (str_starts_with($telephone, '+')) {
+                    $telephone = '+221' . substr($telephone, 1);
+                } else {
+                    $telephone = '+221' . $telephone;
+                }
+            }
+            $user = User::where('telephone', $telephone)->first();
+        }
+
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+
+        // Vérifier si l'email est vérifié
+        if (!$user->email_verified_at) {
+            if (!$request->has('code') || $request->code !== $user->verification_code) {
+                return response()->json(['error' => 'Code de vérification requis ou invalide'], 403);
+            }
+
+            // Marquer comme vérifié
+            $user->email_verified_at = now();
+            $user->verification_code = null;
+            $user->save();
         }
 
         // Créer le token d'accès avec Passport
@@ -98,24 +277,31 @@ class AuthController extends Controller
     /**
      * @OA\Post(
      *     path="/api/v1/auth/refresh",
-     *     tags={"Authentification"},
      *     summary="Rafraîchir le token d'accès",
-     *     description="Utilise un refresh token pour obtenir un nouveau token d'accès",
+     *     tags={"Authentification"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="refresh_token", type="string", description="Refresh token")
+     *             required={"refresh_token"},
+     *             @OA\Property(property="refresh_token", type="string", example="refresh_token_here")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Token rafraîchi avec succès",
-     *         @OA\JsonContent(ref="#/components/schemas/AuthResponse")
+     *         description="Token rafraîchi",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="token_type", type="string", example="Bearer"),
+     *             @OA\Property(property="expires_in", type="integer"),
+     *             @OA\Property(property="access_token", type="string"),
+     *             @OA\Property(property="refresh_token", type="string")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=401,
      *         description="Refresh token invalide",
-     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Invalid refresh token")
+     *         )
      *     )
      * )
      */
@@ -148,9 +334,8 @@ class AuthController extends Controller
     /**
      * @OA\Post(
      *     path="/api/v1/auth/logout",
+     *     summary="Se déconnecter",
      *     tags={"Authentification"},
-     *     summary="Déconnexion utilisateur",
-     *     description="Révoque tous les tokens d'accès de l'utilisateur",
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
@@ -158,11 +343,6 @@ class AuthController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Successfully logged out")
      *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Token invalide",
-     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
      *     )
      * )
      */
@@ -182,153 +362,19 @@ class AuthController extends Controller
     }
 
     /**
-     * @OA\Post(
-     *     path="/api/v1/auth/register",
-     *     tags={"Authentification"},
-     *     summary="Inscription utilisateur",
-     *     description="Crée un nouveau compte utilisateur avec un compte associé",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/RegisterRequest")
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Utilisateur créé avec succès",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", ref="#/components/schemas/User"),
-     *             @OA\Property(property="message", type="string", example="Utilisateur créé avec succès. Vous pouvez maintenant vous connecter.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Erreurs de validation",
-     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Erreur serveur",
-     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-     *     )
-     * )
-     */
-    public function register(Request $request)
-    {
-        // Valider manuellement pour avoir le contrôle sur les erreurs
-        $validator = validator($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'telephone' => ['required', 'string', 'regex:/^(?:\+221)?\s?(77|70|76|75|78)\s?\d{3}\s?\d{2}\s?\d{2}$/', 'unique:users,telephone'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'password_confirmation' => ['required', 'string'],
-        ], [
-            'name.required' => 'Le nom est obligatoire.',
-            'name.string' => 'Le nom doit être une chaîne de caractères.',
-            'name.max' => 'Le nom ne peut pas dépasser 255 caractères.',
-
-            'email.required' => 'L\'email est obligatoire.',
-            'email.string' => 'L\'email doit être une chaîne de caractères.',
-            'email.email' => 'L\'email doit être une adresse email valide.',
-            'email.max' => 'L\'email ne peut pas dépasser 255 caractères.',
-            'email.unique' => 'Cet email est déjà utilisé.',
-
-            'telephone.required' => 'Le numéro de téléphone est obligatoire.',
-            'telephone.string' => 'Le numéro de téléphone doit être une chaîne de caractères.',
-            'telephone.regex' => 'Le numéro de téléphone doit être au format sénégalais (+221) 77/70/76/75/78 XXX XX XX.',
-            'telephone.unique' => 'Ce numéro de téléphone est déjà utilisé.',
-
-            'password.required' => 'Le mot de passe est obligatoire.',
-            'password.string' => 'Le mot de passe doit être une chaîne de caractères.',
-            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
-            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
-
-            'password_confirmation.required' => 'La confirmation du mot de passe est obligatoire.',
-        ]);
-
-        // Nettoyer le numéro de téléphone
-        if ($request->has('telephone')) {
-            $telephone = $request->telephone;
-
-            // Supprimer tous les espaces
-            $telephone = preg_replace('/\s+/', '', $telephone);
-
-            // Ajouter +221 si absent
-            if (!str_starts_with($telephone, '+221')) {
-                if (str_starts_with($telephone, '+')) {
-                    // Si commence par + mais pas +221, remplacer
-                    $telephone = '+221' . substr($telephone, 1);
-                } else {
-                    // Ajouter +221
-                    $telephone = '+221' . $telephone;
-                }
-            }
-
-            $request->merge(['telephone' => $telephone]);
-        }
-
-        if ($validator->fails()) {
-            return $this->validationErrorResponse($validator->errors());
-        }
-
-        try {
-            DB::beginTransaction();
-
-            // Créer l'utilisateur
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'telephone' => $request->telephone,
-                'password' => Hash::make($request->password),
-                'role' => 'client', // Par défaut, tous les nouveaux utilisateurs sont clients
-                'email_verified_at' => now(), // Auto-vérification pour simplifier
-            ]);
-
-            // Créer un compte pour l'utilisateur
-            $compte = Compte::create([
-                'user_id' => $user->id,
-            ]);
-
-            DB::commit();
-
-            // Charger les relations pour la réponse
-            $user->load('compte');
-
-            return $this->successResponse(
-                new UserResource($user),
-                'Utilisateur créé avec succès. Vous pouvez maintenant vous connecter.',
-                201
-            );
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return $this->errorResponse(
-                'Erreur lors de la création du compte utilisateur.',
-                500
-            );
-        }
-    }
-
-    /**
      * @OA\Get(
      *     path="/api/user",
+     *     summary="Obtenir les informations de l'utilisateur connecté",
      *     tags={"Authentification"},
-     *     summary="Informations utilisateur",
-     *     description="Récupère les informations de l'utilisateur connecté",
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
-     *         description="Informations utilisateur récupérées",
+     *         description="Informations utilisateur",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", ref="#/components/schemas/User"),
-     *             @OA\Property(property="message", type="string", example="Informations utilisateur récupérées avec succès.")
+     *             @OA\Property(property="message", type="string", example="Informations utilisateur récupérées avec succès."),
+     *             @OA\Property(property="data", ref="#/components/schemas/UserResource")
      *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Token invalide",
-     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
      *     )
      * )
      */

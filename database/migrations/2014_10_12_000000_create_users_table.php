@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('telephone')->unique();
             $table->enum('role', ['client', 'distributeur','admin'])->default('client');
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('verification_code')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->softDeletes();

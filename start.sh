@@ -1,3 +1,4 @@
+php artisan l5-swagger:generate
 #!/bin/bash
 
 # Créer le fichier .env si nécessaire
@@ -85,6 +86,12 @@ if php artisan passport:install --force; then
     echo "Passport keys installed successfully!"
 else
     echo "Passport installation failed, but continuing..."
+fi
+
+# Générer les clés OAuth si elles n'existent pas
+if [ ! -f storage/oauth-private.key ] || [ ! -f storage/oauth-public.key ]; then
+    echo "Generating OAuth keys..."
+    php artisan passport:keys --force
 fi
 
 # Générer les caches pour la production

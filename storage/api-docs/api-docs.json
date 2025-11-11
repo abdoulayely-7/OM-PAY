@@ -2,58 +2,108 @@
     "openapi": "3.0.0",
     "info": {
         "title": "OM Pay API",
-        "description": "API de paiement mobile pour OM Pay - Système de paiement et transfert d'argent",
-        "contact": {
-            "email": "contact@ompay.com"
-        },
+        "description": "API pour l'application OM Pay",
         "version": "1.0.0"
     },
     "servers": [
         {
-            "url": "https:\/\/om-pay-qdx2.onrender.com",
+            "url": "https://om-pay-qdx2.onrender.com",
             "description": "Serveur de production"
         },
         {
-            "url": "http:\/\/localhost:8000",
+            "url": "http://127.0.0.1:8000",
             "description": "Serveur de développement"
         }
     ],
     "paths": {
-        "\/api\/v1\/auth\/login": {
+        "/api/v1/auth/register": {
             "post": {
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Connexion utilisateur",
-                "description": "Authentifie un utilisateur et retourne un token d'accès",
-                "operationId": "5db09a35f965c6ca7529ed3c3cae8e21",
+                "summary": "Inscrire un nouvel utilisateur",
+                "operationId": "48e49e48019e8b141753cb515a26100b",
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application\/json": {
+                        "application/json": {
                             "schema": {
-                                "$ref": "#\/components\/schemas\/LoginRequest"
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "telephone",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "771234567"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Connexion réussie",
+                    "201": {
+                        "description": "Utilisateur créé avec succès",
                         "content": {
-                            "application\/json": {
+                            "application/json": {
                                 "schema": {
-                                    "$ref": "#\/components\/schemas\/AuthResponse"
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur créé avec succès. Un code de vérification a été envoyé à votre email."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     },
-                    "401": {
-                        "description": "Identifiants invalides",
+                    "422": {
+                        "description": "Erreur de validation",
                         "content": {
-                            "application\/json": {
+                            "application/json": {
                                 "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -61,23 +111,36 @@
                 }
             }
         },
-        "\/api\/v1\/auth\/refresh": {
+        "/api/v1/auth/login": {
             "post": {
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Rafraîchir le token d'accès",
-                "description": "Utilise un refresh token pour obtenir un nouveau token d'accès",
-                "operationId": "05bd0482845348cafa4da9e4fb7d0ffb",
+                "summary": "Se connecter",
+                "operationId": "5db09a35f965c6ca7529ed3c3cae8e21",
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application\/json": {
+                        "application/json": {
                             "schema": {
+                                "required": [
+                                    "identifier",
+                                    "password"
+                                ],
                                 "properties": {
-                                    "refresh_token": {
-                                        "description": "Refresh token",
-                                        "type": "string"
+                                    "identifier": {
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "code": {
+                                        "description": "Requis pour la première connexion",
+                                        "type": "string",
+                                        "example": "123456"
                                     }
                                 },
                                 "type": "object"
@@ -87,21 +150,76 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Token rafraîchi avec succès",
+                        "description": "Connexion réussie",
                         "content": {
-                            "application\/json": {
+                            "application/json": {
                                 "schema": {
-                                    "$ref": "#\/components\/schemas\/AuthResponse"
+                                    "properties": {
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "example": 31536000
+                                        },
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "refresh_token": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                },
+                                                "role": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     },
                     "401": {
-                        "description": "Refresh token invalide",
+                        "description": "Identifiants invalides",
                         "content": {
-                            "application\/json": {
+                            "application/json": {
                                 "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid credentials"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Code de vérification requis ou invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Code de vérification requis ou invalide"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -109,19 +227,89 @@
                 }
             }
         },
-        "\/api\/v1\/auth\/logout": {
+        "/api/v1/auth/refresh": {
             "post": {
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Déconnexion utilisateur",
-                "description": "Révoque tous les tokens d'accès de l'utilisateur",
+                "summary": "Rafraîchir le token d'accès",
+                "operationId": "05bd0482845348cafa4da9e4fb7d0ffb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string",
+                                        "example": "refresh_token_here"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token rafraîchi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "expires_in": {
+                                            "type": "integer"
+                                        },
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "refresh_token": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Refresh token invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Invalid refresh token"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Se déconnecter",
                 "operationId": "8f1a443d39c3bf383f851fbb51253c64",
                 "responses": {
                     "200": {
                         "description": "Déconnexion réussie",
                         "content": {
-                            "application\/json": {
+                            "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
@@ -133,16 +321,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Token invalide",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
                     }
                 },
                 "security": [
@@ -152,622 +330,33 @@
                 ]
             }
         },
-        "\/api\/v1\/auth\/register": {
-            "post": {
-                "tags": [
-                    "Authentification"
-                ],
-                "summary": "Inscription utilisateur",
-                "description": "Crée un nouveau compte utilisateur avec un compte associé",
-                "operationId": "48e49e48019e8b141753cb515a26100b",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/RegisterRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Utilisateur créé avec succès",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/User"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Utilisateur créé avec succès. Vous pouvez maintenant vous connecter."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Erreurs de validation",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Erreur serveur",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "\/api\/user": {
+        "/api/user": {
             "get": {
                 "tags": [
                     "Authentification"
                 ],
-                "summary": "Informations utilisateur",
-                "description": "Récupère les informations de l'utilisateur connecté",
+                "summary": "Obtenir les informations de l'utilisateur connecté",
                 "operationId": "7c1cf647d76fad4b3eb1549fa4fe2f4c",
                 "responses": {
                     "200": {
-                        "description": "Informations utilisateur récupérées",
+                        "description": "Informations utilisateur",
                         "content": {
-                            "application\/json": {
+                            "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
                                             "type": "boolean",
                                             "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/User"
                                         },
                                         "message": {
                                             "type": "string",
                                             "example": "Informations utilisateur récupérées avec succès."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Token invalide",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "\/": {
-            "get": {
-                "summary": "Page d'accueil",
-                "description": "Page d'accueil de l'API OM Pay",
-                "operationId": "ac5f32eec336b092a10a014ae5e0d4ed",
-                "responses": {
-                    "200": {
-                        "description": "Page d'accueil affichée",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Bienvenue sur l'API OM Pay"
-                                        },
-                                        "version": {
-                                            "type": "string",
-                                            "example": "1.0.0"
-                                        },
-                                        "documentation": {
-                                            "type": "string",
-                                            "example": "https:\/\/om-pay-qdx2.onrender.com\/api\/documentation"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "\/api\/client\/paiement": {
-            "post": {
-                "tags": [
-                    "Paiements"
-                ],
-                "summary": "Effectuer un paiement",
-                "description": "Permet à un client d'effectuer un paiement vers un marchand",
-                "operationId": "d040eebc693ade4690eb7e3cdfb21f7f",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/PaiementRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Paiement effectué avec succès",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
                                         },
                                         "data": {
-                                            "$ref": "#\/components\/schemas\/Transaction"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Paiement effectué avec succès."
+                                            "$ref": "#/components/schemas/UserResource"
                                         }
                                     },
                                     "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Erreur lors du paiement",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "\/api\/distributeur\/depot": {
-            "post": {
-                "tags": [
-                    "Transactions"
-                ],
-                "summary": "Effectuer un dépôt",
-                "description": "Permet à un distributeur d'effectuer un dépôt sur le compte d'un client",
-                "operationId": "b8ca574b94e040c7b7e99982a0a866d7",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/TransactionRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Dépôt effectué avec succès",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/Transaction"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Dépôt effectué avec succès."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Erreur lors du dépôt",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "\/api\/distributeur\/retrait": {
-            "post": {
-                "tags": [
-                    "Transactions"
-                ],
-                "summary": "Effectuer un retrait",
-                "description": "Permet à un distributeur d'effectuer un retrait sur le compte d'un client",
-                "operationId": "ed53faa5420f9f2fa75b8edfd6c60070",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/TransactionRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Retrait effectué avec succès",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/Transaction"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Retrait effectué avec succès."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Erreur lors du retrait",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "\/api\/distributeur\/transactions": {
-            "get": {
-                "tags": [
-                    "Transactions"
-                ],
-                "summary": "Lister les transactions du distributeur",
-                "description": "Récupère toutes les transactions effectuées par le distributeur connecté",
-                "operationId": "05ec688faafa13ced1d9492351591378",
-                "responses": {
-                    "200": {
-                        "description": "Transactions récupérées avec succès",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#\/components\/schemas\/Transaction"
-                                            }
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Transactions récupérées avec succès."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Token invalide",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "\/api\/distributeur\/transactions\/{transaction}": {
-            "get": {
-                "tags": [
-                    "Transactions"
-                ],
-                "summary": "Afficher une transaction spécifique",
-                "description": "Récupère les détails d'une transaction spécifique du distributeur",
-                "operationId": "f442e5272f769e457767a3a59c4c6fdc",
-                "parameters": [
-                    {
-                        "name": "transaction",
-                        "in": "path",
-                        "description": "ID de la transaction",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Transaction récupérée avec succès",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/Transaction"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Transaction récupérée avec succès."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Transaction non trouvée",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "\/api\/client\/solde": {
-            "get": {
-                "tags": [
-                    "Transactions"
-                ],
-                "summary": "Récupérer le solde du client",
-                "description": "Récupère le solde actuel du compte du client connecté",
-                "operationId": "fc06ddad4126dc4f93e8cceed5690b08",
-                "responses": {
-                    "200": {
-                        "description": "Solde récupéré avec succès",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/SoldeResponse"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Solde récupéré avec succès."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Aucun compte trouvé",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "\/api\/client\/transfert": {
-            "post": {
-                "tags": [
-                    "Transactions"
-                ],
-                "summary": "Effectuer un transfert",
-                "description": "Permet à un client d'effectuer un transfert vers un autre numéro",
-                "operationId": "d30c3b396cc10cf30bf127cc6b927223",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application\/json": {
-                            "schema": {
-                                "$ref": "#\/components\/schemas\/TransferRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Transfert effectué avec succès",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#\/components\/schemas\/TransferResponse"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Transfert effectué avec succès."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Aucun compte trouvé",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Erreur lors du transfert",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "\/api\/client\/transactions": {
-            "get": {
-                "tags": [
-                    "Transactions"
-                ],
-                "summary": "Récupérer les transactions du client",
-                "description": "Récupère l'historique des transactions du client connecté",
-                "operationId": "ef241b9fc6a36f0b5314ea19b99d8ff4",
-                "parameters": [
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Nombre d'éléments par page",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 20
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Transactions récupérées avec succès",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#\/components\/schemas\/Transaction"
-                                            }
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Transactions récupérées avec succès."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Aucun compte trouvé",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ErrorResponse"
                                 }
                             }
                         }
@@ -782,35 +371,25 @@
         }
     },
     "components": {
-        "securitySchemes": {
-            "bearerAuth": {
-                "type": "http",
-                "bearerFormat": "JWT",
-                "scheme": "bearer"
-            }
-        },
         "schemas": {
-            "User": {
-                "type": "object",
-                "title": "Utilisateur",
+            "UserResource": {
                 "properties": {
                     "id": {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "ID unique de l'utilisateur"
+                        "example": "uuid"
                     },
                     "name": {
                         "type": "string",
-                        "description": "Nom complet de l'utilisateur"
+                        "example": "John Doe"
                     },
                     "email": {
                         "type": "string",
                         "format": "email",
-                        "description": "Adresse email"
+                        "example": "john@example.com"
                     },
                     "telephone": {
                         "type": "string",
-                        "description": "Numéro de téléphone"
+                        "example": "+221771234567"
                     },
                     "role": {
                         "type": "string",
@@ -819,343 +398,57 @@
                             "distributeur",
                             "admin"
                         ],
-                        "description": "Rôle de l'utilisateur"
+                        "example": "client"
                     },
                     "email_verified_at": {
                         "type": "string",
                         "format": "date-time",
-                        "nullable": true,
-                        "description": "Date de vérification email"
+                        "nullable": true
                     },
                     "created_at": {
                         "type": "string",
-                        "format": "date-time",
-                        "description": "Date de création"
+                        "format": "date-time"
                     },
                     "updated_at": {
                         "type": "string",
-                        "format": "date-time",
-                        "description": "Date de mise à jour"
-                    }
-                }
-            },
-            "LoginRequest": {
-                "type": "object",
-                "title": "Requête de connexion",
-                "required": [
-                    "telephone",
-                    "password"
-                ],
-                "properties": {
-                    "telephone": {
-                        "type": "string",
-                        "description": "Numéro de téléphone"
-                    },
-                    "password": {
-                        "type": "string",
-                        "description": "Mot de passe"
-                    }
-                }
-            },
-            "RegisterRequest": {
-                "type": "object",
-                "title": "Requête d'inscription",
-                "required": [
-                    "name",
-                    "email",
-                    "telephone",
-                    "password",
-                    "role"
-                ],
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Nom complet"
-                    },
-                    "email": {
-                        "type": "string",
-                        "format": "email",
-                        "description": "Adresse email"
-                    },
-                    "telephone": {
-                        "type": "string",
-                        "description": "Numéro de téléphone"
-                    },
-                    "password": {
-                        "type": "string",
-                        "description": "Mot de passe"
-                    },
-                    "role": {
-                        "type": "string",
-                        "enum": [
-                            "client",
-                            "distributeur"
-                        ],
-                        "description": "Rôle"
-                    }
-                }
-            },
-            "AuthResponse": {
-                "type": "object",
-                "title": "Réponse d'authentification",
-                "properties": {
-                    "user": {
-                        "$ref": "#\/components\/schemas\/User"
-                    },
-                    "access_token": {
-                        "type": "string",
-                        "description": "Token d'accès"
-                    },
-                    "token_type": {
-                        "type": "string",
-                        "example": "Bearer"
-                    },
-                    "expires_in": {
-                        "type": "integer",
-                        "description": "Durée de validité en secondes"
-                    }
-                }
-            },
-            "ErrorResponse": {
-                "type": "object",
-                "title": "Réponse d'erreur",
-                "properties": {
-                    "success": {
-                        "type": "boolean",
-                        "example": false
-                    },
-                    "message": {
-                        "type": "string",
-                        "description": "Message d'erreur"
-                    },
-                    "errors": {
-                        "type": "object",
-                        "description": "Détails des erreurs"
-                    }
-                }
-            },
-            "Compte": {
-                "type": "object",
-                "title": "Compte",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "ID unique du compte"
-                    },
-                    "user_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "ID de l'utilisateur propriétaire"
-                    },
-                    "balance": {
-                        "type": "number",
-                        "format": "decimal",
-                        "description": "Solde calculé dynamiquement"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Date de création"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Date de mise à jour"
-                    },
-                    "user": {
-                        "$ref": "#\/components\/schemas\/User"
-                    }
-                }
-            },
-            "Transaction": {
-                "type": "object",
-                "title": "Transaction",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "ID unique de la transaction"
-                    },
-                    "compte_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "ID du compte"
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "depot",
-                            "retrait",
-                            "transfert",
-                            "paiement",
-                            "transfer_debit",
-                            "transfer_credit"
-                        ],
-                        "description": "Type de transaction"
-                    },
-                    "montant": {
-                        "type": "number",
-                        "format": "decimal",
-                        "description": "Montant de la transaction"
-                    },
-                    "reference": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "Référence unique de la transaction"
-                    },
-                    "merchant_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "nullable": true,
-                        "description": "ID du marchand (pour les paiements)"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Date de création"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Date de mise à jour"
+                        "format": "date-time"
                     },
                     "compte": {
-                        "$ref": "#\/components\/schemas\/Compte"
-                    },
-                    "merchant": {
-                        "$ref": "#\/components\/schemas\/Marchand"
+                        "$ref": "#/components/schemas/CompteResource"
                     }
-                }
+                },
+                "type": "object"
             },
-            "Marchand": {
-                "type": "object",
-                "title": "Marchand",
+            "CompteResource": {
                 "properties": {
                     "id": {
                         "type": "string",
-                        "format": "uuid",
-                        "description": "ID unique du marchand"
+                        "example": "uuid"
                     },
-                    "nom": {
-                        "type": "string",
-                        "description": "Nom du marchand"
-                    },
-                    "code": {
-                        "type": "string",
-                        "description": "Code unique du marchand"
-                    },
-                    "description": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "Description du marchand"
+                    "solde": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0
                     },
                     "created_at": {
                         "type": "string",
-                        "format": "date-time",
-                        "description": "Date de création"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "Date de mise à jour"
+                        "format": "date-time"
                     }
-                }
-            },
-            "TransactionRequest": {
-                "type": "object",
-                "title": "Requête de transaction",
-                "required": [
-                    "telephone",
-                    "montant"
-                ],
-                "properties": {
-                    "telephone": {
-                        "type": "string",
-                        "description": "Numéro de téléphone du client"
-                    },
-                    "montant": {
-                        "type": "number",
-                        "format": "decimal",
-                        "description": "Montant de la transaction"
-                    }
-                }
-            },
-            "TransferRequest": {
-                "type": "object",
-                "title": "Requête de transfert",
-                "required": [
-                    "telephone_destinataire",
-                    "montant"
-                ],
-                "properties": {
-                    "telephone_destinataire": {
-                        "type": "string",
-                        "description": "Numéro de téléphone du destinataire"
-                    },
-                    "montant": {
-                        "type": "number",
-                        "format": "decimal",
-                        "description": "Montant du transfert"
-                    }
-                }
-            },
-            "TransferResponse": {
-                "type": "object",
-                "title": "Réponse de transfert",
-                "properties": {
-                    "transaction_debit": {
-                        "$ref": "#\/components\/schemas\/Transaction"
-                    },
-                    "transaction_credit": {
-                        "$ref": "#\/components\/schemas\/Transaction"
-                    }
-                }
-            },
-            "PaiementRequest": {
-                "type": "object",
-                "title": "Requête de paiement",
-                "required": [
-                    "code_marchand",
-                    "montant"
-                ],
-                "properties": {
-                    "code_marchand": {
-                        "type": "string",
-                        "description": "Code unique du marchand"
-                    },
-                    "montant": {
-                        "type": "number",
-                        "format": "decimal",
-                        "description": "Montant du paiement"
-                    }
-                }
-            },
-            "SoldeResponse": {
-                "type": "object",
-                "title": "Réponse de solde",
-                "properties": {
-                    "solde": {
-                        "type": "number",
-                        "format": "decimal",
-                        "description": "Solde actuel du compte"
-                    }
-                }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer"
             }
         }
     },
     "tags": [
         {
             "name": "Authentification",
-            "description": "Endpoints d'authentification"
-        },
-        {
-            "name": "Paiements",
-            "description": "Endpoints de gestion des paiements"
-        },
-        {
-            "name": "Transactions",
-            "description": "Endpoints de gestion des transactions"
+            "description": "Authentification"
         }
     ]
 }

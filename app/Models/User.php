@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password',
         'telephone',
         'role',
+        'verification_code',
     ];
 
     public function compte()
