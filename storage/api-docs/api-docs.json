@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "OM Pay API",
-        "description": "API pour l'application OM Pay<br><br>**Comptes de test :**<br>- **Admin :** admin@om-pay.com / password<br>- **Distributeur :** distributeur@om-pay.com / +221772345678 / password<br>- **Clients :** Générés automatiquement avec mot de passe 'password'",
+        "description": "API pour l'application OM Pay<br><br>**Comptes de test :**<br>- **Admin :** admin@om-pay.com / password<br>- **Distributeur :** distributeur@om-pay.com / +221772345678 / password<br>- **Clients :** Générés automatiquement avec mot de passe 'password'<br><br>**Codes marchands :** PAY535, FRE960, PAY152, YOB872, SUN353",
         "version": "1.0.0"
     },
     "servers": [
@@ -354,6 +354,93 @@
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/client/paiement": {
+            "post": {
+                "tags": [
+                    "Client"
+                ],
+                "summary": "Effectuer un paiement",
+                "description": "Permet à un client d'effectuer un paiement vers un marchand",
+                "operationId": "d040eebc693ade4690eb7e3cdfb21f7f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code_marchand",
+                                    "montant"
+                                ],
+                                "properties": {
+                                    "code_marchand": {
+                                        "description": "Code du marchand (ex: PAY535, FRE960, PAY152, YOB872, SUN353)",
+                                        "type": "string",
+                                        "example": "PAY535"
+                                    },
+                                    "montant": {
+                                        "description": "Montant du paiement",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Paiement effectué avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Paiement effectué avec succès."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TransactionResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur lors du paiement",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors du paiement: Solde insuffisant."
                                         }
                                     },
                                     "type": "object"
@@ -1010,6 +1097,22 @@
                 },
                 "type": "object"
             },
+            "PaiementRequest": {
+                "properties": {
+                    "code_marchand": {
+                        "description": "Code du marchand",
+                        "type": "string",
+                        "example": "ORA123"
+                    },
+                    "montant": {
+                        "description": "Montant du paiement",
+                        "type": "number",
+                        "format": "float",
+                        "example": 5000
+                    }
+                },
+                "type": "object"
+            },
             "TransactionResource": {
                 "properties": {
                     "id": {
@@ -1084,12 +1187,12 @@
             "description": "Authentification"
         },
         {
-            "name": "Distributeur",
-            "description": "Distributeur"
-        },
-        {
             "name": "Client",
             "description": "Client"
+        },
+        {
+            "name": "Distributeur",
+            "description": "Distributeur"
         }
     ]
 }
