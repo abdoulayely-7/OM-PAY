@@ -10,8 +10,23 @@ use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 
 /**
- *     name="Transactions",
- *     description="Endpoints de gestion des transactions"
+ * @OA\Schema(
+ *     schema="TransactionResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="string", example="uuid"),
+ *     @OA\Property(property="type", type="string", enum={"depot", "retrait", "transfer_debit", "transfer_credit", "paiement"}, example="depot"),
+ *     @OA\Property(property="montant", type="number", format="float", example=5000),
+ *     @OA\Property(property="reference", type="string", example="TRF-ABC123"),
+ *     @OA\Property(property="date_transaction", type="string", format="date-time", example="2025-11-11 14:30:00"),
+ *     @OA\Property(property="client", type="object",
+ *         @OA\Property(property="id", type="string"),
+ *         @OA\Property(property="nom", type="string"),
+ *         @OA\Property(property="telephone", type="string")
+ *     ),
+ *     @OA\Property(property="distributeur", type="object", nullable=true,
+ *         @OA\Property(property="id", type="string"),
+ *         @OA\Property(property="nom", type="string")
+ *     )
  * )
  */
 class TransactionController extends Controller
@@ -26,19 +41,36 @@ class TransactionController extends Controller
     }
 
     /**
+     * @OA\Post(
      *     path="/api/distributeur/depot",
-     *     tags={"Transactions"},
+     *     tags={"Distributeur"},
      *     summary="Effectuer un dépôt",
      *     description="Permet à un distributeur d'effectuer un dépôt sur le compte d'un client",
      *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
      *         required=true,
-     *     ),
-     *         response=201,
-     *         description="Dépôt effectué avec succès",
+     *         @OA\JsonContent(
+     *             required={"telephone","montant"},
+     *             @OA\Property(property="telephone", type="string", example="771234567", description="Numéro de téléphone du client"),
+     *             @OA\Property(property="montant", type="number", format="float", example=5000, description="Montant du dépôt")
      *         )
      *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Dépôt effectué avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Dépôt effectué avec succès."),
+     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Erreur lors du dépôt",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Erreur lors du dépôt: Client non trouvé.")
+     *         )
      *     )
      * )
      */
@@ -65,19 +97,36 @@ class TransactionController extends Controller
     }
 
     /**
+     * @OA\Post(
      *     path="/api/distributeur/retrait",
-     *     tags={"Transactions"},
+     *     tags={"Distributeur"},
      *     summary="Effectuer un retrait",
      *     description="Permet à un distributeur d'effectuer un retrait sur le compte d'un client",
      *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
      *         required=true,
-     *     ),
-     *         response=201,
-     *         description="Retrait effectué avec succès",
+     *         @OA\JsonContent(
+     *             required={"telephone","montant"},
+     *             @OA\Property(property="telephone", type="string", example="771234567", description="Numéro de téléphone du client"),
+     *             @OA\Property(property="montant", type="number", format="float", example=2000, description="Montant du retrait")
      *         )
      *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Retrait effectué avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Retrait effectué avec succès."),
+     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Erreur lors du retrait",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Erreur lors du retrait: Solde insuffisant.")
+     *         )
      *     )
      * )
      */
@@ -104,17 +153,34 @@ class TransactionController extends Controller
     }
 
     /**
+     * @OA\Get(
      *     path="/api/distributeur/transactions",
-     *     tags={"Transactions"},
+     *     tags={"Distributeur"},
      *     summary="Lister les transactions du distributeur",
      *     description="Récupère toutes les transactions effectuées par le distributeur connecté",
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Numéro de page",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
      *         response=200,
      *         description="Transactions récupérées avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Transactions récupérées avec succès."),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/TransactionResource"))
      *         )
      *     ),
+     *     @OA\Response(
      *         response=401,
      *         description="Token invalide",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Unauthorized")
+     *         )
      *     )
      * )
      */
@@ -129,22 +195,35 @@ class TransactionController extends Controller
     }
 
     /**
+     * @OA\Get(
      *     path="/api/distributeur/transactions/{transaction}",
-     *     tags={"Transactions"},
+     *     tags={"Distributeur"},
      *     summary="Afficher une transaction spécifique",
      *     description="Récupère les détails d'une transaction spécifique du distributeur",
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
      *         name="transaction",
      *         in="path",
      *         required=true,
      *         description="ID de la transaction",
+     *         @OA\Schema(type="string")
      *     ),
+     *     @OA\Response(
      *         response=200,
      *         description="Transaction récupérée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Transaction récupérée avec succès."),
+     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
      *         )
      *     ),
+     *     @OA\Response(
      *         response=404,
      *         description="Transaction non trouvée",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Transaction non trouvée.")
+     *         )
      *     )
      * )
      */
@@ -164,17 +243,30 @@ class TransactionController extends Controller
     }
 
     /**
+     * @OA\Get(
      *     path="/api/client/solde",
-     *     tags={"Transactions"},
+     *     tags={"Client"},
      *     summary="Récupérer le solde du client",
-     *     description="Récupère le solde actuel du compte du client connecté",
+     *     description="Récupère le solde actuel du compte du client connecté (dépôts - retraits/paiements/transferts)",
      *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
      *         response=200,
      *         description="Solde récupéré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Solde récupéré avec succès."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="solde", type="number", format="float", example=15000)
+     *             )
      *         )
      *     ),
+     *     @OA\Response(
      *         response=404,
      *         description="Aucun compte trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Aucun compte associé trouvé.")
+     *         )
      *     )
      * )
      */
@@ -199,22 +291,47 @@ class TransactionController extends Controller
     }
 
     /**
+     * @OA\Post(
      *     path="/api/client/transfert",
-     *     tags={"Transactions"},
+     *     tags={"Client"},
      *     summary="Effectuer un transfert",
      *     description="Permet à un client d'effectuer un transfert vers un autre numéro",
      *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
      *         required=true,
-     *     ),
-     *         response=201,
-     *         description="Transfert effectué avec succès",
+     *         @OA\JsonContent(
+     *             required={"telephone_destinataire","montant"},
+     *             @OA\Property(property="telephone_destinataire", type="string", example="772345678", description="Numéro de téléphone du destinataire"),
+     *             @OA\Property(property="montant", type="number", format="float", example=3000, description="Montant du transfert")
      *         )
      *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Transfert effectué avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Transfert effectué avec succès."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="transaction_debit", ref="#/components/schemas/TransactionResource"),
+     *                 @OA\Property(property="transaction_credit", ref="#/components/schemas/TransactionResource")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=404,
      *         description="Aucun compte trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Aucun compte associé trouvé.")
+     *         )
      *     ),
+     *     @OA\Response(
      *         response=500,
      *         description="Erreur lors du transfert",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Erreur lors du transfert: Solde insuffisant.")
+     *         )
      *     )
      * )
      */
@@ -247,22 +364,35 @@ class TransactionController extends Controller
     }
 
     /**
+     * @OA\Get(
      *     path="/api/client/transactions",
-     *     tags={"Transactions"},
+     *     tags={"Client"},
      *     summary="Récupérer les transactions du client",
      *     description="Récupère l'historique des transactions du client connecté",
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Nombre d'éléments par page",
      *         required=false,
+     *         @OA\Schema(type="integer", example=20)
      *     ),
+     *     @OA\Response(
      *         response=200,
      *         description="Transactions récupérées avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Transactions récupérées avec succès."),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/TransactionResource"))
      *         )
      *     ),
+     *     @OA\Response(
      *         response=404,
      *         description="Aucun compte trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Aucun compte associé trouvé.")
+     *         )
      *     )
      * )
      */

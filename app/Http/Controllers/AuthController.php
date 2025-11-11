@@ -21,7 +21,7 @@ use Laravel\Passport\Client;
  * @OA\Info(
  *     title="OM Pay API",
  *     version="1.0.0",
- *     description="API pour l'application OM Pay"
+ *     description="API pour l'application OM Pay<br><br>**Comptes de test :**<br>- **Admin :** admin@om-pay.com / password<br>- **Distributeur :** distributeur@om-pay.com / +221772345678 / password<br>- **Clients :** Générés automatiquement avec mot de passe 'password'"
  * )
  *
  * * @OA\Server(

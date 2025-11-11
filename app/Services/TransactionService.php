@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Compte;
+use App\Models\Marchand;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 

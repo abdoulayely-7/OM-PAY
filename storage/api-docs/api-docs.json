@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "OM Pay API",
-        "description": "API pour l'application OM Pay",
+        "description": "API pour l'application OM Pay<br><br>**Comptes de test :**<br>- **Admin :** admin@om-pay.com / password<br>- **Distributeur :** distributeur@om-pay.com / +221772345678 / password<br>- **Clients :** Générés automatiquement avec mot de passe 'password'",
         "version": "1.0.0"
     },
     "servers": [
@@ -368,6 +368,579 @@
                     }
                 ]
             }
+        },
+        "/api/distributeur/depot": {
+            "post": {
+                "tags": [
+                    "Distributeur"
+                ],
+                "summary": "Effectuer un dépôt",
+                "description": "Permet à un distributeur d'effectuer un dépôt sur le compte d'un client",
+                "operationId": "b8ca574b94e040c7b7e99982a0a866d7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "telephone",
+                                    "montant"
+                                ],
+                                "properties": {
+                                    "telephone": {
+                                        "description": "Numéro de téléphone du client",
+                                        "type": "string",
+                                        "example": "771234567"
+                                    },
+                                    "montant": {
+                                        "description": "Montant du dépôt",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Dépôt effectué avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dépôt effectué avec succès."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TransactionResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur lors du dépôt",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors du dépôt: Client non trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributeur/retrait": {
+            "post": {
+                "tags": [
+                    "Distributeur"
+                ],
+                "summary": "Effectuer un retrait",
+                "description": "Permet à un distributeur d'effectuer un retrait sur le compte d'un client",
+                "operationId": "ed53faa5420f9f2fa75b8edfd6c60070",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "telephone",
+                                    "montant"
+                                ],
+                                "properties": {
+                                    "telephone": {
+                                        "description": "Numéro de téléphone du client",
+                                        "type": "string",
+                                        "example": "771234567"
+                                    },
+                                    "montant": {
+                                        "description": "Montant du retrait",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 2000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Retrait effectué avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Retrait effectué avec succès."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TransactionResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur lors du retrait",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors du retrait: Solde insuffisant."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributeur/transactions": {
+            "get": {
+                "tags": [
+                    "Distributeur"
+                ],
+                "summary": "Lister les transactions du distributeur",
+                "description": "Récupère toutes les transactions effectuées par le distributeur connecté",
+                "operationId": "05ec688faafa13ced1d9492351591378",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transactions récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transactions récupérées avec succès."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TransactionResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/distributeur/transactions/{transaction}": {
+            "get": {
+                "tags": [
+                    "Distributeur"
+                ],
+                "summary": "Afficher une transaction spécifique",
+                "description": "Récupère les détails d'une transaction spécifique du distributeur",
+                "operationId": "f442e5272f769e457767a3a59c4c6fdc",
+                "parameters": [
+                    {
+                        "name": "transaction",
+                        "in": "path",
+                        "description": "ID de la transaction",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transaction récupérée avec succès."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TransactionResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction non trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transaction non trouvée."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/client/solde": {
+            "get": {
+                "tags": [
+                    "Client"
+                ],
+                "summary": "Récupérer le solde du client",
+                "description": "Récupère le solde actuel du compte du client connecté (dépôts - retraits/paiements/transferts)",
+                "operationId": "fc06ddad4126dc4f93e8cceed5690b08",
+                "responses": {
+                    "200": {
+                        "description": "Solde récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Solde récupéré avec succès."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "solde": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 15000
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun compte trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun compte associé trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/client/transfert": {
+            "post": {
+                "tags": [
+                    "Client"
+                ],
+                "summary": "Effectuer un transfert",
+                "description": "Permet à un client d'effectuer un transfert vers un autre numéro",
+                "operationId": "d30c3b396cc10cf30bf127cc6b927223",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "telephone_destinataire",
+                                    "montant"
+                                ],
+                                "properties": {
+                                    "telephone_destinataire": {
+                                        "description": "Numéro de téléphone du destinataire",
+                                        "type": "string",
+                                        "example": "772345678"
+                                    },
+                                    "montant": {
+                                        "description": "Montant du transfert",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 3000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Transfert effectué avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transfert effectué avec succès."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "transaction_debit": {
+                                                    "$ref": "#/components/schemas/TransactionResource"
+                                                },
+                                                "transaction_credit": {
+                                                    "$ref": "#/components/schemas/TransactionResource"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun compte trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun compte associé trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur lors du transfert",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors du transfert: Solde insuffisant."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/client/transactions": {
+            "get": {
+                "tags": [
+                    "Client"
+                ],
+                "summary": "Récupérer les transactions du client",
+                "description": "Récupère l'historique des transactions du client connecté",
+                "operationId": "ef241b9fc6a36f0b5314ea19b99d8ff4",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transactions récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Transactions récupérées avec succès."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TransactionResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun compte trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun compte associé trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -436,6 +1009,66 @@
                     }
                 },
                 "type": "object"
+            },
+            "TransactionResource": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "uuid"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "depot",
+                            "retrait",
+                            "transfer_debit",
+                            "transfer_credit",
+                            "paiement"
+                        ],
+                        "example": "depot"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 5000
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "TRF-ABC123"
+                    },
+                    "date_transaction": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-11 14:30:00"
+                    },
+                    "client": {
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "nom": {
+                                "type": "string"
+                            },
+                            "telephone": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "distributeur": {
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "nom": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -449,6 +1082,14 @@
         {
             "name": "Authentification",
             "description": "Authentification"
+        },
+        {
+            "name": "Distributeur",
+            "description": "Distributeur"
+        },
+        {
+            "name": "Client",
+            "description": "Client"
         }
     ]
 }
