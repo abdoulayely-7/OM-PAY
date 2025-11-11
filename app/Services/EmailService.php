@@ -10,6 +10,7 @@ class EmailService
     protected $apiKey;
     protected $apiUrl = 'https://api.brevo.com/v3/smtp/email';
 
+    
     public function __construct()
     {
         $this->apiKey = config('services.brevo.api_key');
