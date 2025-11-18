@@ -14,6 +14,7 @@ class Compte extends Model
     protected $keyType = 'string';
     protected $fillable = [
         'user_id',
+        'qr_code_path',
     ];
 
     public function user() { return $this->belongsTo(User::class); }

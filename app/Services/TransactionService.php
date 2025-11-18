@@ -38,6 +38,7 @@ class TransactionService
             // Créer la transaction de dépôt
             $transaction = Transaction::create([
                 'compte_id' => $compte->id,
+                'user_id' => $distributeurId,
                 'type' => 'depot',
                 'montant' => $montant,
                 'reference' => $this->genererReference(),
@@ -87,6 +88,7 @@ class TransactionService
             // Créer la transaction de retrait
             $transaction = Transaction::create([
                 'compte_id' => $compte->id,
+                'user_id' => $distributeurId,
                 'type' => 'retrait',
                 'montant' => $montant,
                 'reference' => $this->genererReference(),
@@ -108,9 +110,8 @@ class TransactionService
      */
     public function getTransactionsDistributeur(string $distributeurId, int $perPage = 20)
     {
-        // Pour l'instant, retourner toutes les transactions de type 'depot'
-        // TODO: Ajouter un champ pour lier les transactions aux distributeurs
-        return Transaction::where('type', 'depot')
+        return Transaction::where('user_id', $distributeurId)
+            ->whereIn('type', ['depot', 'retrait'])
             ->with(['compte.user'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
@@ -121,13 +122,10 @@ class TransactionService
      */
     public function getTransaction(string $transactionId, string $distributeurId): Transaction
     {
-        $transaction = Transaction::findOrFail($transactionId);
-
-        // Pour l'instant, vérifier seulement que c'est une transaction de type 'depot'
-        // TODO: Ajouter une vérification pour l'appartenance au distributeur
-        if ($transaction->type !== 'depot') {
-            throw new \Exception('Transaction non trouvée.');
-        }
+        $transaction = Transaction::where('id', $transactionId)
+            ->where('user_id', $distributeurId)
+            ->whereIn('type', ['depot', 'retrait'])
+            ->firstOrFail();
 
         return $transaction->load(['compte.user']);
     }
@@ -275,6 +273,26 @@ class TransactionService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Récupérer les transactions d'un client avec pagination et filtrage
+     */
+    public function getTransactionsClient(string $clientId, int $perPage = 20, ?string $type = null)
+    {
+        $query = Transaction::where('compte_id', function ($query) use ($clientId) {
+            $query->select('id')
+                  ->from('comptes')
+                  ->where('user_id', $clientId);
+        });
+
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        return $query->with(['compte.user'])
+                     ->orderBy('created_at', 'desc')
+                     ->paginate($perPage);
     }
 
     /**

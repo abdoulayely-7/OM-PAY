@@ -13,6 +13,7 @@ class Transaction extends Model
     protected $keyType = 'string';
     protected $fillable = [
         'compte_id',
+        'user_id',
         'type',
         'montant',
         'reference',
@@ -26,6 +27,11 @@ class Transaction extends Model
     public function compte()
     {
         return $this->belongsTo(Compte::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function merchant()

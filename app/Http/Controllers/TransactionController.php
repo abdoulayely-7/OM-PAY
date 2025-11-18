@@ -42,7 +42,7 @@ class TransactionController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/distributeur/depot",
+     *     path="/api/v1/distributeur/depot",
      *     tags={"Distributeur"},
      *     summary="Effectuer un dépôt",
      *     description="Permet à un distributeur d'effectuer un dépôt sur le compte d'un client",
@@ -98,7 +98,7 @@ class TransactionController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/distributeur/retrait",
+     *     path="/api/v1/distributeur/retrait",
      *     tags={"Distributeur"},
      *     summary="Effectuer un retrait",
      *     description="Permet à un distributeur d'effectuer un retrait sur le compte d'un client",
@@ -154,7 +154,7 @@ class TransactionController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/distributeur/transactions",
+     *     path="/api/v1/distributeur/transactions",
      *     tags={"Distributeur"},
      *     summary="Lister les transactions du distributeur",
      *     description="Récupère toutes les transactions effectuées par le distributeur connecté",
@@ -196,7 +196,7 @@ class TransactionController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/distributeur/transactions/{transaction}",
+     *     path="/api/v1/distributeur/transactions/{transaction}",
      *     tags={"Distributeur"},
      *     summary="Afficher une transaction spécifique",
      *     description="Récupère les détails d'une transaction spécifique du distributeur",
@@ -244,7 +244,7 @@ class TransactionController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/client/solde",
+     *     path="/api/v1/client/solde",
      *     tags={"Client"},
      *     summary="Récupérer le solde du client",
      *     description="Récupère le solde actuel du compte du client connecté (dépôts - retraits/paiements/transferts)",
@@ -292,7 +292,7 @@ class TransactionController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/client/transfert",
+     *     path="/api/v1/client/transfert",
      *     tags={"Client"},
      *     summary="Effectuer un transfert",
      *     description="Permet à un client d'effectuer un transfert vers un autre numéro",
@@ -312,8 +312,20 @@ class TransactionController extends Controller
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Transfert effectué avec succès."),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="transaction_debit", ref="#/components/schemas/TransactionResource"),
-     *                 @OA\Property(property="transaction_credit", ref="#/components/schemas/TransactionResource")
+     *                 @OA\Property(property="transaction_debit", type="object",
+     *                     @OA\Property(property="id", type="string", example="uuid"),
+     *                     @OA\Property(property="type", type="string", example="transfer_debit"),
+     *                     @OA\Property(property="montant", type="number", format="float", example=3000),
+     *                     @OA\Property(property="reference", type="string", example="TRF-ABC123"),
+     *                     @OA\Property(property="date_transaction", type="string", format="date-time", example="2025-11-11 14:30:00")
+     *                 ),
+     *                 @OA\Property(property="transaction_credit", type="object",
+     *                     @OA\Property(property="id", type="string", example="uuid"),
+     *                     @OA\Property(property="type", type="string", example="transfer_credit"),
+     *                     @OA\Property(property="montant", type="number", format="float", example=3000),
+     *                     @OA\Property(property="reference", type="string", example="TRF-DEF456"),
+     *                     @OA\Property(property="date_transaction", type="string", format="date-time", example="2025-11-11 14:30:00")
+     *                 )
      *             )
      *         )
      *     ),
@@ -365,10 +377,10 @@ class TransactionController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/client/transactions",
+     *     path="/api/v1/client/transactions",
      *     tags={"Client"},
      *     summary="Récupérer les transactions du client",
-     *     description="Récupère l'historique des transactions du client connecté",
+     *     description="Récupère l'historique des transactions du client connecté avec pagination et filtrage par type",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="per_page",
@@ -377,13 +389,26 @@ class TransactionController extends Controller
      *         required=false,
      *         @OA\Schema(type="integer", example=20)
      *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Type de transaction (depot, retrait, transfer_debit, transfer_credit, paiement)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"depot", "retrait", "transfer_debit", "transfer_credit", "paiement"}, example="depot")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Transactions récupérées avec succès",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Transactions récupérées avec succès."),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/TransactionResource"))
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="string", example="uuid"),
+     *                 @OA\Property(property="type", type="string", example="depot"),
+     *                 @OA\Property(property="montant", type="number", format="float", example=5000),
+     *                 @OA\Property(property="reference", type="string", example="TRF-ABC123"),
+     *                 @OA\Property(property="date_transaction", type="string", format="date-time", example="2025-11-11 14:30:00")
+     *             ))
      *         )
      *     ),
      *     @OA\Response(
@@ -405,10 +430,12 @@ class TransactionController extends Controller
             }
 
             $perPage = $request->get('per_page', 20);
-            $transactions = $user->compte->transactions()
-                ->with(['compte.user'])
-                ->orderBy('created_at', 'desc')
-                ->paginate($perPage);
+            $type = $request->get('type');
+            $transactions = $this->transactionService->getTransactionsClient(
+                $user->id,
+                $perPage,
+                $type
+            );
 
             return $this->successResponse(
                 TransactionResource::collection($transactions),

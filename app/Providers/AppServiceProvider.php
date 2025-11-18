@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Compte;
+use App\Observers\CompteObserver;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
@@ -39,5 +41,8 @@ class AppServiceProvider extends ServiceProvider
             'view-own-account',
             'view-own-transactions',
         ]);
+
+        // Enregistrement des observers
+        Compte::observe(CompteObserver::class);
     }
 }

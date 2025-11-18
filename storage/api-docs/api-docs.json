@@ -168,23 +168,6 @@
                                         },
                                         "refresh_token": {
                                             "type": "string"
-                                        },
-                                        "user": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string"
-                                                },
-                                                "name": {
-                                                    "type": "string"
-                                                },
-                                                "email": {
-                                                    "type": "string"
-                                                },
-                                                "role": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -330,16 +313,16 @@
                 ]
             }
         },
-        "/api/user": {
+        "/api/v1/client/dashboard": {
             "get": {
                 "tags": [
-                    "Authentification"
+                    "Client"
                 ],
-                "summary": "Obtenir les informations de l'utilisateur connecté",
-                "operationId": "7c1cf647d76fad4b3eb1549fa4fe2f4c",
+                "summary": "Obtenir le tableau de bord du client connecté",
+                "operationId": "024413899d13ad7997b55c57b9df3b92",
                 "responses": {
                     "200": {
-                        "description": "Informations utilisateur",
+                        "description": "Informations client complètes",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -353,7 +336,68 @@
                                             "example": "Informations utilisateur récupérées avec succès."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/UserResource"
+                                            "properties": {
+                                                "user": {
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "format": "email",
+                                                            "example": "john@example.com"
+                                                        },
+                                                        "telephone": {
+                                                            "type": "string",
+                                                            "example": "+221771234567"
+                                                        },
+                                                        "role": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "client"
+                                                            ],
+                                                            "example": "client"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "balance": {
+                                                    "description": "Solde du compte",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1500.5
+                                                },
+                                                "transactions": {
+                                                    "description": "10 dernières transactions",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/TransactionResource"
+                                                    }
+                                                },
+                                                "qr_code_path": {
+                                                    "description": "Chemin du QR code du compte",
+                                                    "type": "string",
+                                                    "example": "qrcodes/uuid.png"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès refusé - Réservé aux clients",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Accès refusé"
                                         }
                                     },
                                     "type": "object"
@@ -369,14 +413,14 @@
                 ]
             }
         },
-        "/api/client/paiement": {
+        "/api/v1/client/paiement": {
             "post": {
                 "tags": [
                     "Client"
                 ],
                 "summary": "Effectuer un paiement",
                 "description": "Permet à un client d'effectuer un paiement vers un marchand",
-                "operationId": "d040eebc693ade4690eb7e3cdfb21f7f",
+                "operationId": "ec1908db62b6fc62411f49ab13f02a70",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -420,7 +464,31 @@
                                             "example": "Paiement effectué avec succès."
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/TransactionResource"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "uuid"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "paiement"
+                                                },
+                                                "montant": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 5000
+                                                },
+                                                "reference": {
+                                                    "type": "string",
+                                                    "example": "TRF-ABC123"
+                                                },
+                                                "date_transaction": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-11-11 14:30:00"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -456,14 +524,14 @@
                 ]
             }
         },
-        "/api/distributeur/depot": {
+        "/api/v1/distributeur/depot": {
             "post": {
                 "tags": [
                     "Distributeur"
                 ],
                 "summary": "Effectuer un dépôt",
                 "description": "Permet à un distributeur d'effectuer un dépôt sur le compte d'un client",
-                "operationId": "b8ca574b94e040c7b7e99982a0a866d7",
+                "operationId": "700357d3f1153a2dc5fb6af78ed809b2",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -543,14 +611,14 @@
                 ]
             }
         },
-        "/api/distributeur/retrait": {
+        "/api/v1/distributeur/retrait": {
             "post": {
                 "tags": [
                     "Distributeur"
                 ],
                 "summary": "Effectuer un retrait",
                 "description": "Permet à un distributeur d'effectuer un retrait sur le compte d'un client",
-                "operationId": "ed53faa5420f9f2fa75b8edfd6c60070",
+                "operationId": "25f84c3f4d504ee0623e8f522b39cb3a",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -630,14 +698,14 @@
                 ]
             }
         },
-        "/api/distributeur/transactions": {
+        "/api/v1/distributeur/transactions": {
             "get": {
                 "tags": [
                     "Distributeur"
                 ],
                 "summary": "Lister les transactions du distributeur",
                 "description": "Récupère toutes les transactions effectuées par le distributeur connecté",
-                "operationId": "05ec688faafa13ced1d9492351591378",
+                "operationId": "5d52952cc6fafe8182edded2d8018e0c",
                 "parameters": [
                     {
                         "name": "page",
@@ -701,14 +769,14 @@
                 ]
             }
         },
-        "/api/distributeur/transactions/{transaction}": {
+        "/api/v1/distributeur/transactions/{transaction}": {
             "get": {
                 "tags": [
                     "Distributeur"
                 ],
                 "summary": "Afficher une transaction spécifique",
                 "description": "Récupère les détails d'une transaction spécifique du distributeur",
-                "operationId": "f442e5272f769e457767a3a59c4c6fdc",
+                "operationId": "5d265e178e941750ef6d31043bd75974",
                 "parameters": [
                     {
                         "name": "transaction",
@@ -772,14 +840,14 @@
                 ]
             }
         },
-        "/api/client/solde": {
+        "/api/v1/client/solde": {
             "get": {
                 "tags": [
                     "Client"
                 ],
                 "summary": "Récupérer le solde du client",
                 "description": "Récupère le solde actuel du compte du client connecté (dépôts - retraits/paiements/transferts)",
-                "operationId": "fc06ddad4126dc4f93e8cceed5690b08",
+                "operationId": "960c9182c7f1526ed1e69390d62cead1",
                 "responses": {
                     "200": {
                         "description": "Solde récupéré avec succès",
@@ -839,14 +907,14 @@
                 ]
             }
         },
-        "/api/client/transfert": {
+        "/api/v1/client/transfert": {
             "post": {
                 "tags": [
                     "Client"
                 ],
                 "summary": "Effectuer un transfert",
                 "description": "Permet à un client d'effectuer un transfert vers un autre numéro",
-                "operationId": "d30c3b396cc10cf30bf127cc6b927223",
+                "operationId": "17e3b921972c8dc2199d9f8bc5272eda",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -892,10 +960,58 @@
                                         "data": {
                                             "properties": {
                                                 "transaction_debit": {
-                                                    "$ref": "#/components/schemas/TransactionResource"
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "example": "uuid"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "transfer_debit"
+                                                        },
+                                                        "montant": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 3000
+                                                        },
+                                                        "reference": {
+                                                            "type": "string",
+                                                            "example": "TRF-ABC123"
+                                                        },
+                                                        "date_transaction": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-11-11 14:30:00"
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 },
                                                 "transaction_credit": {
-                                                    "$ref": "#/components/schemas/TransactionResource"
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "example": "uuid"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "example": "transfer_credit"
+                                                        },
+                                                        "montant": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 3000
+                                                        },
+                                                        "reference": {
+                                                            "type": "string",
+                                                            "example": "TRF-DEF456"
+                                                        },
+                                                        "date_transaction": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-11-11 14:30:00"
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 }
                                             },
                                             "type": "object"
@@ -954,14 +1070,14 @@
                 ]
             }
         },
-        "/api/client/transactions": {
+        "/api/v1/client/transactions": {
             "get": {
                 "tags": [
                     "Client"
                 ],
                 "summary": "Récupérer les transactions du client",
-                "description": "Récupère l'historique des transactions du client connecté",
-                "operationId": "ef241b9fc6a36f0b5314ea19b99d8ff4",
+                "description": "Récupère l'historique des transactions du client connecté avec pagination et filtrage par type",
+                "operationId": "7016b52911934dcec4cb1cf9bb8f8bcb",
                 "parameters": [
                     {
                         "name": "per_page",
@@ -971,6 +1087,23 @@
                         "schema": {
                             "type": "integer",
                             "example": 20
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Type de transaction (depot, retrait, transfer_debit, transfer_credit, paiement)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "depot",
+                                "retrait",
+                                "transfer_debit",
+                                "transfer_credit",
+                                "paiement"
+                            ],
+                            "example": "depot"
                         }
                     }
                 ],
@@ -992,7 +1125,31 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/TransactionResource"
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "example": "uuid"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "depot"
+                                                    },
+                                                    "montant": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 5000
+                                                    },
+                                                    "reference": {
+                                                        "type": "string",
+                                                        "example": "TRF-ABC123"
+                                                    },
+                                                    "date_transaction": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-11-11 14:30:00"
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         }
                                     },
@@ -1072,9 +1229,6 @@
                     "updated_at": {
                         "type": "string",
                         "format": "date-time"
-                    },
-                    "compte": {
-                        "$ref": "#/components/schemas/CompteResource"
                     }
                 },
                 "type": "object"

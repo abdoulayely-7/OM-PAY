@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Resources\TransactionResource;
+use App\Http\Resources\UserProfileResource;
 use App\Http\Resources\UserResource;
 use App\Models\Compte;
 use App\Models\User;
-use App\Services\EmailService;
+use App\Services\TransactionService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Laravel\Passport\Client;
+use Otp\Otp;
 
 /**
  * @OA\Info(
@@ -52,8 +55,7 @@ use Laravel\Passport\Client;
  *     @OA\Property(property="role", type="string", enum={"client", "distributeur", "admin"}, example="client"),
  *     @OA\Property(property="email_verified_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
- *     @OA\Property(property="updated_at", type="string", format="date-time"),
- *     @OA\Property(property="compte", ref="#/components/schemas/CompteResource")
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
  *
  * @OA\Schema(
@@ -106,15 +108,16 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request)
     {
-        Log::info('Register method called');
+
         $validated = $request->validated();
 
 
         try {
             DB::beginTransaction();
 
-            // Générer le code de vérification
-            $code = random_int(100000, 999999);
+            // Générer le code de vérification avec OTP
+            $otp = new Otp();
+            $code = $otp->totp('JBSWY3DPEHPK3PXP'); // Secret fixe pour génération simple
 
             // Créer l'utilisateur
             $user = User::create([
@@ -133,9 +136,7 @@ class AuthController extends Controller
 
             DB::commit();
 
-            // Envoyer l'email de vérification
-            $emailService = app(EmailService::class);
-            $emailService->sendVerificationEmail($user->email, $code);
+            // L'email sera envoyé automatiquement via l'observer et l'événement
 
             // Charger les relations pour la réponse
             $user->load('compte');
@@ -176,13 +177,7 @@ class AuthController extends Controller
      *             @OA\Property(property="token_type", type="string", example="Bearer"),
      *             @OA\Property(property="expires_in", type="integer", example=31536000),
      *             @OA\Property(property="access_token", type="string"),
-     *             @OA\Property(property="refresh_token", type="string"),
-     *             @OA\Property(property="user", type="object",
-     *                 @OA\Property(property="id", type="string"),
-     *                 @OA\Property(property="name", type="string"),
-     *                 @OA\Property(property="email", type="string"),
-     *                 @OA\Property(property="role", type="string")
-     *             )
+     *             @OA\Property(property="refresh_token", type="string")
      *         )
      *     ),
      *     @OA\Response(
@@ -260,18 +255,15 @@ class AuthController extends Controller
             'Strict'
         );
 
-        return response()->json([
+        // Réponse avec seulement les tokens
+        $responseData = [
             'token_type' => 'Bearer',
             'expires_in' => $token->token->expires_at->diffInSeconds(now()),
             'access_token' => $token->accessToken,
             'refresh_token' => $refreshToken->accessToken,
-            // 'user' => [
-            //     'id' => $user->id,
-            //     'name' => $user->name,
-            //     'email' => $user->email,
-            //     'role' => $user->role,
-            // ],
-        ])->withCookie($cookie);
+        ];
+
+        return response()->json($responseData)->withCookie($cookie);
     }
 
     /**
@@ -319,7 +311,7 @@ class AuthController extends Controller
                 'form_params' => [
                     'grant_type' => 'refresh_token',
                     'refresh_token' => $request->refresh_token,
-                    'client_id' => 9, // Personal access client
+                    'client_id' => 11, // Personal access client on Render
                     'client_secret' => '', // Pas de secret pour personal access
                     'scope' => '',
                 ],
@@ -363,25 +355,59 @@ class AuthController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/user",
-     *     summary="Obtenir les informations de l'utilisateur connecté",
-     *     tags={"Authentification"},
+     *     path="/api/v1/client/dashboard",
+     *     summary="Obtenir le tableau de bord du client connecté",
+     *     tags={"Client"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
-     *         description="Informations utilisateur",
+     *         description="Informations client complètes",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Informations utilisateur récupérées avec succès."),
-     *             @OA\Property(property="data", ref="#/components/schemas/UserResource")
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="user", type="object",
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *                     @OA\Property(property="telephone", type="string", example="+221771234567"),
+     *                     @OA\Property(property="role", type="string", enum={"client"}, example="client")
+     *                 ),
+     *                 @OA\Property(property="balance", type="number", format="float", example=1500.50, description="Solde du compte"),
+     *                 @OA\Property(property="transactions", type="array", @OA\Items(ref="#/components/schemas/TransactionResource"), description="10 dernières transactions"),
+     *                 @OA\Property(property="qr_code_path", type="string", example="qrcodes/uuid.png", description="Chemin du QR code du compte")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Accès refusé - Réservé aux clients",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Accès refusé")
      *         )
      *     )
      * )
      */
-    public function user(Request $request)
+    public function dashboard(Request $request)
     {
+        $user = $request->user()->load('compte');
+
+        $responseData = [
+            'user' => new UserProfileResource($user),
+        ];
+
+        // Pour les clients, ajouter solde, transactions récentes et QR code
+        if ($user->role === 'client') {
+            $balance = $user->compte->balance ?? 0;
+            $transactionService = app(TransactionService::class);
+            $transactions = $transactionService->getTransactionsClient($user->id, 10); // Plus de transactions
+
+            $responseData['solde'] = $balance;
+            $responseData['transactions'] = TransactionResource::collection($transactions);
+            $responseData['qr_code_path'] = $user->compte->qr_code_path;
+        }
+
         return $this->successResponse(
-            new UserResource($request->user()->load('compte')),
+            $responseData,
             'Informations utilisateur récupérées avec succès.'
         );
     }

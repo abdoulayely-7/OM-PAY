@@ -30,7 +30,7 @@ class PayementController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/client/paiement",
+     *     path="/api/v1/client/paiement",
      *     tags={"Client"},
      *     summary="Effectuer un paiement",
      *     description="Permet à un client d'effectuer un paiement vers un marchand",
@@ -49,7 +49,13 @@ class PayementController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Paiement effectué avec succès."),
-     *             @OA\Property(property="data", ref="#/components/schemas/TransactionResource")
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", example="uuid"),
+     *                 @OA\Property(property="type", type="string", example="paiement"),
+     *                 @OA\Property(property="montant", type="number", format="float", example=5000),
+     *                 @OA\Property(property="reference", type="string", example="TRF-ABC123"),
+     *                 @OA\Property(property="date_transaction", type="string", format="date-time", example="2025-11-11 14:30:00")
+     *             )
      *         )
      *     ),
      *     @OA\Response(

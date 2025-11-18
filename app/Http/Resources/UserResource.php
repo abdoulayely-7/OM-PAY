@@ -24,15 +24,6 @@ class UserResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
 
-            // Relations conditionnelles
-            'compte' => $this->whenLoaded('compte', function () {
-                return [
-                    'id' => $this->compte->id,
-                    'solde' => 0, // À calculer selon les transactions
-                    'created_at' => $this->compte->created_at,
-                ];
-            }),
-
             'transactions_count' => $this->whenCounted('transactions'),
             'tokens_count' => $this->whenCounted('tokens'),
         ];
