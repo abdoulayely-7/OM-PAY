@@ -50,13 +50,8 @@ else
     echo "MongoDB connection test failed, but continuing..."
 fi
 
-# Forcer l'installation de Passport
-echo "Installing Passport keys..."
-if php artisan passport:install --force; then
-    echo "Passport keys installed successfully!"
-else
-    echo "Passport installation failed, but continuing..."
-fi
+# Sanctum est déjà configuré, pas besoin d'installation supplémentaire
+echo "Sanctum is configured, no additional setup needed."
 
 # Générer les clés OAuth si elles n'existent pas
 if [ ! -f storage/oauth-private.key ] || [ ! -f storage/oauth-public.key ]; then

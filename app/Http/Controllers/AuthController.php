@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Laravel\Passport\Client;
 use Otp\Otp;
 
 /**
@@ -234,18 +233,13 @@ class AuthController extends Controller
             $user->save();
         }
 
-        // Créer le token d'accès avec Passport
+        // Créer le token d'accès avec Sanctum
         $token = $user->createToken('API Access Token');
-
-        // Générer un refresh token séparé
-        $refreshToken = $user->createToken('Refresh Token');
-        $refreshToken->token->expires_at = now()->addDays(30); // Refresh token valide 30 jours
-        $refreshToken->token->save();
 
         // Stocker le token dans un cookie sécurisé
         $cookie = Cookie::make(
             'access_token',
-            $token->accessToken,
+            $token->plainTextToken,
             60 * 24 * 7, // 7 jours
             '/',
             null,
@@ -255,73 +249,15 @@ class AuthController extends Controller
             'Strict'
         );
 
-        // Réponse avec seulement les tokens
+        // Réponse avec le token
         $responseData = [
             'token_type' => 'Bearer',
-            'expires_in' => $token->token->expires_at->diffInSeconds(now()),
-            'access_token' => $token->accessToken,
-            'refresh_token' => $refreshToken->accessToken,
+            'access_token' => $token->plainTextToken,
         ];
 
         return response()->json($responseData)->withCookie($cookie);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/v1/auth/refresh",
-     *     summary="Rafraîchir le token d'accès",
-     *     tags={"Authentification"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"refresh_token"},
-     *             @OA\Property(property="refresh_token", type="string", example="refresh_token_here")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Token rafraîchi",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="token_type", type="string", example="Bearer"),
-     *             @OA\Property(property="expires_in", type="integer"),
-     *             @OA\Property(property="access_token", type="string"),
-     *             @OA\Property(property="refresh_token", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Refresh token invalide",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Invalid refresh token")
-     *         )
-     *     )
-     * )
-     */
-    public function refresh(Request $request)
-    {
-        $request->validate([
-            'refresh_token' => 'required|string',
-        ]);
-
-        // Utiliser Passport pour rafraîchir le token
-        $http = new \GuzzleHttp\Client;
-
-        try {
-            $response = $http->post(url('/oauth/token'), [
-                'form_params' => [
-                    'grant_type' => 'refresh_token',
-                    'refresh_token' => $request->refresh_token,
-                    'client_id' => 11, // Personal access client on Render
-                    'client_secret' => '', // Pas de secret pour personal access
-                    'scope' => '',
-                ],
-            ]);
-
-            return response()->json(json_decode((string) $response->getBody(), true));
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            return response()->json(['error' => 'Invalid refresh token'], 401);
-        }
-    }
 
     /**
      * @OA\Post(
@@ -341,9 +277,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         // Révoquer tous les tokens de l'utilisateur
-        $request->user()->tokens->each(function ($token) {
-            $token->revoke();
-        });
+        $request->user()->tokens()->delete();
 
         // Supprimer le cookie
         $cookie = Cookie::forget('access_token');
