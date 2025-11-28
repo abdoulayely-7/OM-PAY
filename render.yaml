@@ -10,17 +10,11 @@ services:
       - key: APP_KEY
         generateValue: true
       - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_HOST
-        value: "dpg-d48f51ngi27c73cjrhmg-a.oregon-postgres.render.com"
-      - key: DB_PORT
-        value: "5432"
-      - key: DB_DATABASE
-        value: "om_pay"
-      - key: DB_USERNAME
-        value: "om_pay_user"
-      - key: DB_PASSWORD
-        value: "r5SKL0PoFIoX0kPwmrdwQnIVAbOc1sXo"
+        value: mongo
+      - key: MONGO_DB_URL
+        value: "mongodb+srv://lydevtech:Mouhamm%40dsws632@cluster0.xeygdpt.mongodb.net/"
+      - key: MONGO_DB_DATABASE
+        value: "om_pay_db"
       - key: CACHE_DRIVER
         value: file
       - key: QUEUE_CONNECTION
