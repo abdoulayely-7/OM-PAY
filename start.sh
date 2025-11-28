@@ -8,13 +8,10 @@ if [ ! -f .env ]; then
 APP_NAME="OM-Pay"
 APP_ENV=production
 APP_KEY=${APP_KEY:-}
-APP_DEBUG=true
-DB_CONNECTION=pgsql
-DB_HOST=${DB_HOST:-dpg-d48f51ngi27c73cjrhmg-a.oregon-postgres.render.com}
-DB_PORT=${DB_PORT:-5432}
-DB_DATABASE=${DB_DATABASE:-om_pay}
-DB_USERNAME=${DB_USERNAME:-om_pay_user}
-DB_PASSWORD=${DB_PASSWORD:-r5SKL0PoFIoX0kPwmrdwQnIVAbOc1sXo}
+APP_DEBUG=false
+DB_CONNECTION=mongo
+MONGO_DB_URL=${MONGO_DB_URL:-mongodb+srv://lydevtech:Mouhamm%40dsws632@cluster0.xeygdpt.mongodb.net/}
+MONGO_DB_DATABASE=${MONGO_DB_DATABASE:-om_pay_db}
 CACHE_DRIVER=file
 SESSION_DRIVER=file
 QUEUE_CONNECTION=sync
@@ -25,11 +22,9 @@ fi
 
 # Afficher les variables de connexion DB pour debug
 echo "Database configuration:"
-echo "DB_HOST: $DB_HOST"
-echo "DB_PORT: $DB_PORT"
-echo "DB_DATABASE: $DB_DATABASE"
-echo "DB_USERNAME: $DB_USERNAME"
-echo "DB_PASSWORD: [HIDDEN]"
+echo "DB_CONNECTION: $DB_CONNECTION"
+echo "MONGO_DB_URL: $MONGO_DB_URL"
+echo "MONGO_DB_DATABASE: $MONGO_DB_DATABASE"
 
 # Générer la clé d'application si nécessaire
 if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
@@ -37,47 +32,22 @@ if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
     php artisan key:generate --force
 fi
 
-# Attendre que la base de données soit prête
-echo "Waiting for database to be ready..."
-max_attempts=30
-attempt=1
-while [ $attempt -le $max_attempts ]; do
-    if php artisan migrate:status >/dev/null 2>&1; then
-        echo "Database is ready!"
-        break
-    fi
-    echo "Database is unavailable - attempt $attempt/$max_attempts - sleeping"
-    sleep 5
-    attempt=$((attempt + 1))
-done
-
-if [ $attempt -gt $max_attempts ]; then
-    echo "Database connection failed after $max_attempts attempts"
-    echo "Starting application anyway (database might be ready later)..."
-fi
-
-# Tester la connexion DB de base
-echo "Testing basic database connection..."
+# Tester la connexion MongoDB
+echo "Testing MongoDB connection..."
 if php -r "
 try {
-    \$pdo = new PDO('pgsql:host='.\$_ENV['DB_HOST'].';port='.\$_ENV['DB_PORT'].';dbname='.\$_ENV['DB_DATABASE'], \$_ENV['DB_USERNAME'], \$_ENV['DB_PASSWORD']);
-    echo 'Database connection successful!';
+    \$manager = new MongoDB\Driver\Manager(\$_ENV['MONGO_DB_URL']);
+    \$command = new MongoDB\Driver\Command(['ping' => 1]);
+    \$manager->executeCommand(\$_ENV['MONGO_DB_DATABASE'], \$command);
+    echo 'MongoDB connection successful!';
 } catch (Exception \$e) {
-    echo 'Database connection failed: ' . \$e->getMessage();
+    echo 'MongoDB connection failed: ' . \$e->getMessage();
     exit(1);
 }
 "; then
-    echo "Basic DB connection test passed!"
+    echo "MongoDB connection test passed!"
 else
-    echo "Basic DB connection test failed, but continuing..."
-fi
-
-# Forcer l'exécution des migrations même si la DB n'est pas détectée
-echo "Attempting to run migrations..."
-if php artisan migrate --force; then
-    echo "Migrations completed successfully!"
-else
-    echo "Migrations failed, but continuing..."
+    echo "MongoDB connection test failed, but continuing..."
 fi
 
 # Forcer l'installation de Passport
