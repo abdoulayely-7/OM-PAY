@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd zip
 
-# Installer l'extension MongoDB
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+# Installer l'extension MongoDB (version compatible)
+RUN pecl install mongodb-1.20.0 && docker-php-ext-enable mongodb
 
 # Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
