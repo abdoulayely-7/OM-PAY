@@ -6,6 +6,7 @@ use App\Events\CompteCreated;
 use App\Services\EmailService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Log;
 
 class SendClientNotification implements ShouldQueue
 {
@@ -24,9 +25,19 @@ class SendClientNotification implements ShouldQueue
     /**
      * Handle the event.
      */
+//
+
     public function handle(CompteCreated $event): void
     {
         $code = $event->user->verification_code;
-        $this->emailService->sendVerificationEmail($event->user->email, $code);
+
+        try {
+            $this->emailService->sendVerificationEmail($event->user->email, $code);
+        } catch (\Throwable $e) {
+            Log::error('SendClientNotification failed: ' . $e->getMessage(), [
+                'user_id' => $event->user->getKey(),
+            ]);
+        }
     }
 }
+

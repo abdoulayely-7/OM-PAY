@@ -97,6 +97,7 @@ fi
 # Générer les caches pour la production
 echo "Optimizing application..."
 php artisan config:cache
+php artisan route:clear
 php artisan route:cache
 php artisan view:cache
 

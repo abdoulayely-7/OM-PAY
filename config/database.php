@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => env('DB_CONNECTION', 'mongo'),
 
     /*
     |--------------------------------------------------------------------------
@@ -93,6 +93,17 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'mongo' => [
+            'driver' => 'mongodb',
+            'dsn' => env('MONGO_DB_URL'),
+            'database' => env('MONGO_DB_DATABASE', 'om_pay_db'),
+            'options' => [
+                'ssl' => true,
+                'sslAllowInvalidCertificates' => true,
+                'sslAllowInvalidHostnames' => true,
+            ],
+        ],
+
     ],
 
     /*
@@ -125,7 +136,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
         ],
 
         'default' => [

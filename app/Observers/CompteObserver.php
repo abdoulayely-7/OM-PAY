@@ -28,8 +28,12 @@ class CompteObserver
         Storage::put($fileName, $qrCodeImage);
 
         // Mettre à jour le chemin dans la DB
-        $compte->qr_code_path = $fileName;
-        $compte->save();
+        // Utiliser une mise à jour directe pour éviter l'erreur du driver Mongo
+        // qui refuse les opérations tentant de modifier le champ 'id'.
+        // On récupère le nom de la clé primaire et sa valeur pour construire la requête.
+        $keyName = $compte->getKeyName();
+        $keyValue = $compte->getKey();
+        Compte::where($keyName, $keyValue)->update(['qr_code_path' => $fileName]);
 
         // Déclencher l'événement pour l'email
         CompteCreated::dispatch($compte, $compte->user);
